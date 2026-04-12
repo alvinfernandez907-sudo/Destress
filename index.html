@@ -595,96 +595,243 @@
     #syncStatus.err  { background: #ef4444; }
 
     @media (max-width: 768px) {
-  body { flex-direction: column; height: auto; overflow: auto; }
-      .sidebar {
-    position: relative;
-    top: auto;
-    left: auto;
-    margin-left: 0;
+  html, body {
+    height: auto;
+    overflow: auto;
+  }
+
+  body {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+    background: linear-gradient(135deg, #eaf2fb 0%, #cfdff1 100%);
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    left: 0;
     width: 100%;
     height: auto;
-    padding: 10px;
+    margin-left: 0;
+    padding: 10px 10px 8px;
     display: block;
+    z-index: 1500;
+    background: #132e4f;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
   }
-      .sidebar button { width: auto; padding: 8px 10px; font-size: 12px; }
-      .sidebar-nav {
+
+  .sidebar-nav {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
+    width: max-content;
+    min-width: 100%;
+    align-items: stretch;
   }
 
   .sidebar-nav button {
-    width: auto;
-    min-width: 120px;
-    padding: 9px 10px;
+    flex: 0 0 auto;
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
+    min-height: 78px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .sidebar button span,
+  .sidebar-nav button span {
+    font-size: 11px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .nav-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .nav-icon i {
+    font-size: 14px;
   }
 
   .content-area {
     margin-left: 0;
     width: 100%;
     height: auto;
-    padding: 12px;
+    min-height: calc(100vh - 96px);
+    padding: 0;
     overflow: visible;
+    background: rgba(255, 255, 255, 0.35);
   }
 
-  .header-logo { height: 42px; }
-  .header-title { font-size: 25px; }
-  .controls { flex-direction: column; align-items: flex-start; }
-  .week-badge { width: 100%; box-sizing: border-box; }
-  .control-actions { width: 100%; }
-  .nav-btn { flex: 1; }
-  .summary-section-grid { grid-template-columns: 1fr 1fr; }
-  #homeBranchName { font-size: 36px; }
-  #branchName { font-size: 26px; }
-  th, td { padding: 8px; }
-  table { font-size: 13px; }
-  .performance-day-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 14px;
-    color: #1f2937;
-    flex-wrap: wrap;
+  .content-section {
+    padding: 12px;
   }
-  .performance-day-row:last-child { border-bottom: none; }
-  .performance-day-label {
-    flex: 1 1 60%;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 14px;
-    line-height: 1.2;
+
+  .sticky-top-wrapper {
+    position: static;
+    top: auto;
+    box-shadow: none;
+    background: transparent;
+    padding-bottom: 0;
   }
-  .performance-day-value {
-    flex: 0 0 auto;
-    margin-left: auto;
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-    background: #f8fafc;
-    padding: 4px 12px;
-    border-radius: 999px;
-    min-width: 42px;
+
+  .header-box {
+    padding: 12px 14px;
+    min-height: auto;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .header-logo {
+    height: 42px;
+  }
+
+  .header-title {
+    font-size: 24px;
+  }
+
+  #homeBranchName {
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  #branchName {
+    font-size: 24px;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .week-badge {
+    width: 100%;
+    box-sizing: border-box;
     text-align: center;
   }
-  .performance-day-value::before {
-    content: "";
+
+  .control-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
-  .system-footer { flex-direction: column; gap: 6px; text-align: center; }
-  .settings-table { table-layout: auto; }
-  .modal { padding: 12px; align-items: flex-start; overflow-y: auto; }
-  .modal-content { max-width: 100%; border-radius: 18px; margin-top: 10px; }
-  .entry-modal-header { padding: 18px 18px 14px; }
-  .entry-modal-title { font-size: 20px; }
-  .entry-modal-body { padding: 18px; }
-  .form-grid { grid-template-columns: 1fr; gap: 12px; }
-  .entry-summary-row { grid-template-columns: 1fr; }
-  .modal-actions { flex-direction: column-reverse; }
-  .cancel-btn, .save-btn { width: 100%; }
+
+  .control-actions .nav-btn,
+  .nav-btn {
+    flex: 1 1 140px;
+    text-align: center;
+  }
+
+  .summary-section-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .summary-section-card {
+    padding: 16px;
+  }
+
+  .summary-section-value {
+    font-size: 22px;
+  }
+
+  .table-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 13px;
+  }
+
+  th, td {
+    padding: 8px;
+  }
+
+  .performance-day-row {
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  .performance-day-label {
+    font-size: 14px;
+  }
+
+  .performance-day-value {
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+
+  .system-footer {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    margin-top: 14px;
+  }
+
+  .settings-table {
+    table-layout: auto;
+  }
+
+  .modal {
+    padding: 12px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    border-radius: 18px;
+    margin-top: 10px;
+  }
+
+  .entry-modal-header {
+    padding: 18px 18px 14px;
+  }
+
+  .entry-modal-title {
+    font-size: 20px;
+  }
+
+  .entry-modal-body {
+    padding: 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .entry-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    width: 100%;
+  }
 }
 
     .hidden-summary-card-placeholder { display:none; }
