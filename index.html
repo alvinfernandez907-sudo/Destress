@@ -1,0 +1,4051 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Point of Sales Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="manifest" href="/manifest.json">
+  <!-- Apple PWA Support -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="POS">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #eaf2fb 0%, #cfdff1 100%);
+  background-attachment: fixed;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+  width: 130px;
+  background: #132e4f;
+  padding: 14px 10px;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+    .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+
+.sidebar-nav button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sidebar button span {
+  font-size: 12px;
+  font-weight: 650;
+  color: rgba(255,255,255,0.86);
+  line-height: 1.1;
+  text-align: center;
+  transition: color 0.25s ease;
+}
+
+.sidebar button.active span {
+  color: #ffffff;
+}
+
+.sidebar button:not(.active) span {
+  color: rgba(255,255,255,0.75);
+}
+
+.nav-icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  transition: all 0.25s ease;
+}
+
+.nav-icon::before {
+  display: none;
+}
+
+.nav-icon i {
+  font-size: 16px;
+  color: rgba(255,255,255,0.82);
+  transition: all 0.25s ease;
+}
+
+.sidebar-nav button span {
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(255,255,255,0.86);
+  line-height: 1.1;
+  text-align: left;
+  transition: color 0.25s ease;
+}
+
+.sidebar button i {
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
+}
+
+.sidebar-nav button:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.sidebar-nav button.active {
+  background: linear-gradient(135deg, rgba(4,186,222,0.22), rgba(14,165,233,0.16));
+  box-shadow: inset 0 0 0 1px rgba(4,186,222,0.28);
+}
+
+
+.sidebar-nav button.active span {
+  color: #ffffff;
+}
+
+.sidebar-nav button.active .nav-icon {
+  background: rgba(4,186,222,0.2);
+  border-color: rgba(4,186,222,0.35);
+  box-shadow: 0 0 12px rgba(4,186,222,0.18);
+}
+
+.sidebar-nav button.active .nav-icon i {
+  color: #ffffff;
+}
+
+.sidebar-nav button:disabled,
+.nav-btn:disabled,
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+    .content-area {
+  margin-left: 130px;
+  width: calc(100% - 130px);
+  height: 100vh;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(6px);
+  border-radius: 0;
+}
+    .content-section { 
+      width: 100%; 
+      flex: 1; 
+      min-width: 0; 
+      padding: 16px 16px 16px 16px;
+      box-sizing: border-box
+    }
+
+    .header-box {
+      background: #132e4f;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 72px;
+    }
+    .header-logo  { height: 70px; width: auto; object-fit: contain; display: block; flex-shrink: 0; }
+    .header-title { font-size: 60px; font-weight: 900; line-height: 1.1; }
+    .branch-header { margin-bottom: 10px; width: 100%; }
+    #homeBranchName {
+      font-size: 30px;
+      font-weight: 800;
+      color: #132e4f;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      max-width: 100%;
+      word-break: break-word;
+    }
+    #branchName { font-size: 42px; font-weight: 900; color: #132e4f; line-height: 1.1; }
+
+    .controls {
+      background: white;
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .sticky-top-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #f4f6f8;
+      padding-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .week-badge {
+      font-weight: 800;
+      color: #132e4f;
+      font-size: 14px;
+      background: #eef4fb;
+      border: 1px solid #d8e3f0;
+      padding: 10px 14px;
+      border-radius: 999px;
+    }
+
+    .control-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .nav-btn {
+      padding: 10px 16px;
+      background: #132e4f;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+    .nav-btn:hover { background: #1f4b7d; transform: translateY(-1px); }
+
+    .icon-btn {
+      width: 32px; height: 32px;
+      border: none; background: transparent;
+      cursor: pointer; font-size: 16px;
+      margin: 0 3px; padding: 6px;
+      border-radius: 6px; transition: 0.2s;
+    }
+    .edit-btn   { color: #3b82f6; }
+    .delete-btn-icon { color: #ef4444; }
+    .icon-btn:hover { background: rgba(0,0,0,0.08); }
+
+    .table-scroll-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 12px;
+    }
+
+    table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .table-scroll-wrap table { margin-top: 0; }
+    .main-table     { min-width: 1600px; }
+    .salary-table   { min-width: 900px; }
+    .expenses-table { min-width: 700px; }
+
+    th {
+      background: #132e4f;
+      color: white;
+      padding: 12px 6px;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      text-align: center;
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #edf2f7;
+      font-size: 15px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    tbody tr:nth-child(even) { background: #fafbfd; }
+    tbody tr:hover { background: #eef4fb; transition: 0.15s ease; }
+    td:first-child { font-weight: 700; color: #374151; }
+
+    .money-cell { text-align: center; }
+    .money-value {
+      display: inline-block;
+      min-width: 90px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .therapist-title { font-size: 20px; font-weight: 700; color: #132e4f; margin-bottom: 10px; }
+
+    .table-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    .table-tags-list {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .table-tag {
+      background: #eef4fb;
+      color: #132e4f;
+      border: 1px solid #d7e3f0;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: normal;
+      word-break: break-word;
+      max-width: 220px;
+    }
+    .main-table td:nth-child(6),
+    .main-table td:nth-child(7),
+    .main-table td:nth-child(8) {
+      white-space: normal;
+      vertical-align: top;
+      min-width: 180px;
+    }
+
+    .confirm-modal {
+      display: none;
+      position: fixed;
+      z-index: 20000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .confirm-modal-content {
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 12px;
+      text-align: center;
+      width: 320px;
+      max-width: 90%;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+    .modal-buttons { margin-top: 15px; display: flex; justify-content: space-between; gap: 12px; }
+    .modal-buttons button { flex: 1; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; }
+    #modalOk     { background: #16a34a; color: white; }
+    #modalCancel { background: #dc2626; color: white; }
+
+    .summary-section-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .summary-section-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-top: 5px solid #132e4f;
+    }
+    .summary-section-card.blue   { border-top-color: #0ea5e9; }
+    .summary-section-card.amber  { border-top-color: #f59e0b; }
+    .summary-section-card.purple { border-top-color: #8b5cf6; }
+    .summary-section-card.green  { border-top-color: #10b981; }
+    .summary-section-label { font-size: 12px; font-weight: 700; color: #5b6572; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .summary-section-value { font-size: 26px; font-weight: 800; color: #132e4f; font-variant-numeric: tabular-nums; }
+    .summary-therapist-table { width: 100%; border-collapse: collapse; margin-top: 0; box-shadow: none; min-width: 980px; }
+    .summary-therapist-table th { font-size: 12px; padding: 10px 12px; }
+    .summary-therapist-table td { font-size: 14px; padding: 10px 12px; }
+
+    .performance-day-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 18px;
+      color: #1f2937;
+      flex-wrap: wrap;
+    }
+    .performance-day-row:last-child { border-bottom: none; }
+    .performance-day-label {
+      flex: 1 1 60%;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    .performance-day-value {
+      flex: 0 0 auto;
+      margin-left: auto;
+      font-size: 16px;
+      font-weight: 900;
+      color: #0f172a;
+      background: #f8fafc;
+      padding: 2px 8px;
+      border-radius: 999px;
+      min-width: 42px;
+      text-align: center;
+    }
+
+    .system-footer {
+      margin-top: 20px;
+      padding: 14px 20px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #6b7280;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.45);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .modal-content {
+      width: 100%;
+      max-width: 760px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(15,23,42,0.22);
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+    .entry-modal-header {
+      background: linear-gradient(135deg, #132e4f 0%, #1f4b7d 100%);
+      color: white;
+      padding: 22px 24px 18px;
+    }
+    .entry-modal-title    { font-size: 24px; font-weight: 800; margin: 0; line-height: 1.1; }
+    .entry-modal-subtitle { font-size: 13px; opacity: 0.9; margin-top: 6px; }
+    .entry-modal-body     { padding: 22px 24px 24px; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .field-block { display: flex; flex-direction: column; gap: 6px; }
+    .field-block.full { grid-column: 1 / -1; }
+    .field-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-grid input, .form-grid select {
+      width: 100%; padding: 12px 14px;
+      border: 1px solid #dbe2ea; border-radius: 14px;
+      font-size: 15px; box-sizing: border-box;
+      background: #fff; color: #0f172a;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-grid input:focus, .form-grid select:focus {
+      outline: none; border-color: #04BADE;
+      box-shadow: 0 0 0 4px rgba(4,186,222,0.14);
+    }
+    .form-grid input[readonly] { background: #f8fafc; font-weight: 700; color: #132e4f; }
+
+    .entry-summary-row {
+      grid-column: 1 / -1;
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 12px; margin-top: 4px;
+    }
+    .entry-summary-card {
+      background: #f8fbff; border: 1px solid #d9e8f5;
+      border-radius: 16px; padding: 12px 14px;
+    }
+    .entry-summary-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .entry-summary-card input {
+      border: none; background: transparent; padding: 0;
+      font-size: 20px; font-weight: 800; color: #132e4f;
+      box-shadow: none; width: 100%;
+    }
+
+    .modal-actions { margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px; }
+    .cancel-btn, .save-btn {
+      border: none; border-radius: 12px; padding: 12px 18px;
+      font-weight: 800; cursor: pointer; font-size: 14px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .cancel-btn { background: #eef2f7; color: #334155; }
+    .save-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white; box-shadow: 0 10px 20px rgba(16,185,129,0.22);
+    }
+
+    .multi-select-box { position: relative; width: 100%; }
+    .multi-select-display {
+      min-height: 52px; border: 1px solid #dbe2ea; border-radius: 14px;
+      background: #fff; display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 10px; padding: 10px 14px;
+      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .multi-select-display:hover  { border-color: #b9c9d8; }
+    .multi-select-display.active { border-color: #04BADE; box-shadow: 0 0 0 4px rgba(4,186,222,0.14); }
+    .multi-tags { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+    .multi-placeholder { color: #94a3b8; font-size: 15px; line-height: 28px; }
+    .multi-tag {
+      background: #eaf6fb; color: #132e4f;
+      border: 1px solid #cfe7f3; border-radius: 999px;
+      padding: 6px 10px; font-size: 12px; font-weight: 700; line-height: 1.2;
+    }
+    .multi-arrow { font-size: 16px; color: #64748b; padding-top: 4px; flex-shrink: 0; }
+    .multi-select-dropdown {
+      display: none; position: absolute; top: calc(100% + 8px); left: 0;
+      width: 100%; max-height: 220px; overflow-y: auto;
+      background: #fff; border: 1px solid #dbe2ea; border-radius: 14px;
+      box-shadow: 0 16px 30px rgba(15,23,42,0.12); z-index: 50;
+      padding: 8px; box-sizing: border-box;
+    }
+    .multi-select-dropdown.open { display: block; }
+    .multi-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 8px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+    .multi-option:hover { background: #f8fbff; }
+    .multi-option input { margin-top: 2px; width: auto; box-shadow: none !important; flex-shrink: 0; }
+    .multi-option-text { display: flex; flex-direction: column; gap: 2px; }
+    .multi-option-name { font-size: 14px; font-weight: 700; color: #132e4f; }
+    .multi-option-meta { font-size: 12px; color: #64748b; }
+
+    .settings-tabs { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .settings-tab-btn {
+      padding: 10px 18px; border: none; border-radius: 10px;
+      background: #dbe7f3; color: #132e4f; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .settings-tab-btn.active { background: #132e4f; color: white; }
+    .settings-tab-content { width: 100%; }
+    .therapist-only-wrap { max-width: 500px; }
+
+    .therapist-table-full { width: 100%; table-layout: fixed; min-width: unset; }
+    .therapist-table-full th, .therapist-table-full td { text-align: left; }
+    .therapist-table-full th:last-child, .therapist-table-full td:last-child { width: 140px; text-align: center; }
+
+    .settings-actions { margin-bottom: 12px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    .settings-table-wrap { width: 100%; background: #fff; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+    .settings-table {
+      width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0;
+      background: white; min-width: unset; margin-top: 0; box-shadow: none; border-radius: 14px;
+    }
+    .settings-table th { background: #132e4f; color: white; padding: 11px 6px; font-size: 12px; text-transform: uppercase; text-align: center; white-space: nowrap; }
+    .settings-table td { padding: 10px 6px; border-bottom: 1px solid #edf2f7; font-size: 13px; text-align: center; background: #fff; vertical-align: middle; word-break: break-word; }
+    .settings-table td[contenteditable="true"] { background: #fcfdff; outline: none; }
+    .settings-table td[contenteditable="true"]:focus { background: #eef6ff; box-shadow: inset 0 0 0 2px #04BADE; }
+    .settings-table tbody tr:last-child td { border-bottom: none; }
+    .price-cell { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 12px; white-space: nowrap; }
+
+    #syncStatus {
+      position: fixed;
+      bottom: 16px;
+      right: 20px;
+      background: #132e4f;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: none;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #syncStatus.show { display: block; }
+    #syncStatus.ok   { background: #10b981; }
+    #syncStatus.err  { background: #ef4444; }
+
+    @media (max-width: 768px) {
+  body { flex-direction: column; height: auto; overflow: auto; }
+      .sidebar {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-left: 0;
+    width: 100%;
+    height: auto;
+    padding: 10px;
+    display: block;
+  }
+      .sidebar button { width: auto; padding: 8px 10px; font-size: 12px; }
+      .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sidebar-nav button {
+    width: auto;
+    min-width: 120px;
+    padding: 9px 10px;
+  }
+
+  .content-area {
+    margin-left: 0;
+    width: 100%;
+    height: auto;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .header-logo { height: 42px; }
+  .header-title { font-size: 25px; }
+  .controls { flex-direction: column; align-items: flex-start; }
+  .week-badge { width: 100%; box-sizing: border-box; }
+  .control-actions { width: 100%; }
+  .nav-btn { flex: 1; }
+  .summary-section-grid { grid-template-columns: 1fr 1fr; }
+  #homeBranchName { font-size: 36px; }
+  #branchName { font-size: 26px; }
+  th, td { padding: 8px; }
+  table { font-size: 13px; }
+  .performance-day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #1f2937;
+    flex-wrap: wrap;
+  }
+  .performance-day-row:last-child { border-bottom: none; }
+  .performance-day-label {
+    flex: 1 1 60%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .performance-day-value {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    background: #f8fafc;
+    padding: 4px 12px;
+    border-radius: 999px;
+    min-width: 42px;
+    text-align: center;
+  }
+  .performance-day-value::before {
+    content: "";
+  }
+  .system-footer { flex-direction: column; gap: 6px; text-align: center; }
+  .settings-table { table-layout: auto; }
+  .modal { padding: 12px; align-items: flex-start; overflow-y: auto; }
+  .modal-content { max-width: 100%; border-radius: 18px; margin-top: 10px; }
+  .entry-modal-header { padding: 18px 18px 14px; }
+  .entry-modal-title { font-size: 20px; }
+  .entry-modal-body { padding: 18px; }
+  .form-grid { grid-template-columns: 1fr; gap: 12px; }
+  .entry-summary-row { grid-template-columns: 1fr; }
+  .modal-actions { flex-direction: column-reverse; }
+  .cancel-btn, .save-btn { width: 100%; }
+}
+
+    .hidden-summary-card-placeholder { display:none; }
+
+    /* REMOVE NUMBER INPUT ARROWS (SALARY DEDUCTIONS) */
+#salaryDeductionBody input[type="number"]::-webkit-outer-spin-button,
+#salaryDeductionBody input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#salaryDeductionBody input[type="number"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* LOGIN SCREEN */
+.login-screen{
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #eaf2fb 0%, #cfdff1 100%);
+}
+
+.login-card{
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15,23,42,0.18);
+  overflow: hidden;
+  border: 1px solid #dbe7f3;
+}
+
+.login-card-header{
+  background: linear-gradient(135deg, #132e4f 0%, #1f4b7d 100%);
+  color: white;
+  padding: 24px;
+}
+
+.login-card-header h2{
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.login-card-header p{
+  margin: 8px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.login-card-body{
+  padding: 24px;
+}
+
+.login-field{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.login-field label{
+  font-size: 12px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.login-field input{
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #dbe2ea;
+  border-radius: 14px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.login-field input:focus{
+  outline: none;
+  border-color: #04BADE;
+  box-shadow: 0 0 0 4px rgba(4,186,222,0.14);
+}
+
+.login-btn{
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 10px 20px rgba(16,185,129,0.22);
+}
+
+.login-msg{
+  margin-top: 14px;
+  min-height: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.logout-btn{
+  background: #dc2626 !important;
+}
+  </style>
+</head>
+<body>
+
+  <div id="syncStatus"></div>
+
+    <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-card-header">
+        <h2>Branch Login</h2>
+        <p>Please sign in to access your assigned branch.</p>
+      </div>
+      <div class="login-card-body">
+        <div class="login-field">
+          <label for="loginName">Login Name</label>
+          <input type="text" id="loginName" placeholder="Enter login name">
+        </div>
+
+        <div class="login-field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password">
+        </div>
+
+        <button type="button" class="login-btn" onclick="loginUser()">Login</button>
+        <div id="loginMsg" class="login-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENTRY MODAL -->
+  <div id="entryModal" class="modal">
+    <div class="modal-content">
+      <div class="entry-modal-header">
+        <h2 class="entry-modal-title" id="entryModalTitle">Add New Entry</h2>
+        <div class="entry-modal-subtitle" id="entryModalSubtitle">Create a new sales entry for this week</div>
+      </div>
+      <div class="entry-modal-body">
+        <div class="form-grid">
+          <div class="field-block">
+            <label class="field-label" for="entryDate">Date</label>
+            <input type="date" id="entryDate" />
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="timeSlot">Time Slot</label>
+            <select id="timeSlot">
+              <option value="">Select Time Slot</option>
+              <option value="Morning">Morning</option>
+              <option value="Evening">Evening</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="wellness">Wellness Option</label>
+            <select id="wellness">
+              <option value="">Select Wellness Option</option>
+              <option value="Spa">Spa</option>
+              <option value="Home Service">Home Service</option>
+            </select>
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="clientName">Name of Client</label>
+            <input type="text" id="clientName" placeholder="Enter client name" />
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="therapist">Therapist</label>
+            <select id="therapist"><option value="">Select Therapist</option></select>
+          </div>
+          <div class="field-block"></div>
+
+          <div class="field-block">
+            <label class="field-label">Service</label>
+            <div class="multi-select-box">
+              <div class="multi-select-display" id="servicesDisplay" onclick="toggleMultiSelect('servicesDropdown','servicesDisplay')">
+                <div id="servicesTags" class="multi-tags"><span class="multi-placeholder">Select Service</span></div>
+                <span class="multi-arrow">&#9660;</span>
+              </div>
+              <div class="multi-select-dropdown" id="servicesDropdown"><div id="servicesOptions"></div></div>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <label class="field-label">Other Services</label>
+            <div class="multi-select-box">
+              <div class="multi-select-display" id="otherServicesDisplay" onclick="toggleMultiSelect('otherServicesDropdown','otherServicesDisplay')">
+                <div id="otherServicesTags" class="multi-tags"><span class="multi-placeholder">Select Other Services</span></div>
+                <span class="multi-arrow">&#9660;</span>
+              </div>
+              <div class="multi-select-dropdown" id="otherServicesDropdown"><div id="otherServicesOptions"></div></div>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <label class="field-label">Add-On</label>
+            <div class="multi-select-box">
+              <div class="multi-select-display" id="addonsDisplay" onclick="toggleMultiSelect('addonsDropdown','addonsDisplay')">
+                <div id="addonsTags" class="multi-tags"><span class="multi-placeholder">Select Add-On</span></div>
+                <span class="multi-arrow">&#9660;</span>
+              </div>
+              <div class="multi-select-dropdown" id="addonsDropdown"><div id="addonsOptions"></div></div>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <label class="field-label" for="payment">Mode of Payment</label>
+            <select id="payment">
+              <option value="">Select Payment</option>
+              <option value="Cash">Cash</option>
+              <option value="Gcash">Gcash</option>
+              <option value="Split">Split</option>
+            </select>
+          </div>
+
+          <div id="splitPaymentWrap" class="field-block full" style="display:none;">
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+              <div class="field-block">
+                <label class="field-label" for="splitCashAmount">Cash</label>
+                <input type="text" id="splitCashAmount" placeholder="0.00" />
+              </div>
+              <div class="field-block">
+                <label class="field-label" for="splitGcashAmount">GCash</label>
+                <input type="text" id="splitGcashAmount" placeholder="0.00" />
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:12px;color:#64748b;">Cash + GCash must equal Total</div>
+          </div>
+
+          <div class="field-block">
+            <label class="field-label" for="discount">Discount</label>
+            <select id="discount"><option value="">Select Discount</option></select>
+          </div>
+          <div class="field-block"></div>
+
+          <div class="entry-summary-row">
+            <div class="entry-summary-card">
+              <div class="entry-summary-label">Total</div>
+              <input type="text" id="totalAmount" readonly />
+            </div>
+            <div class="entry-summary-card">
+              <div class="entry-summary-label">Therapist Share</div>
+              <input type="text" id="shareAmount" readonly />
+            </div>
+            <div class="entry-summary-card">
+              <div class="entry-summary-label">Net</div>
+              <input type="text" id="netAmount" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" onclick="closeEntryModal()" class="cancel-btn">Cancel</button>
+          <button type="button" onclick="submitEntry()" class="save-btn" data-requires-ready="true">Save Entry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOYALTY ENTRY MODAL -->
+  <div id="loyaltyModal" class="modal">
+    <div class="modal-content">
+      <div class="entry-modal-header">
+        <h2 class="entry-modal-title" id="loyaltyModalTitle">Add New Loyalty Sales</h2>
+        <div class="entry-modal-subtitle" id="loyaltyModalSubtitle">Create a new loyalty card sales entry</div>
+      </div>
+      <div class="entry-modal-body">
+        <div class="form-grid">
+          <div class="field-block">
+            <label class="field-label" for="loyaltyDate">Date</label>
+            <input type="date" id="loyaltyDate" />
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="loyaltyClientName">Client Name</label>
+            <input type="text" id="loyaltyClientName" placeholder="Enter client name" />
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="loyaltyAmount">Amount</label>
+            <input type="text" id="loyaltyAmount" placeholder="0.00" />
+          </div>
+          <div class="field-block">
+            <label class="field-label" for="loyaltyPayment">Mode of Payment</label>
+            <select id="loyaltyPayment">
+              <option value="">Select Payment</option>
+              <option value="Cash">Cash</option>
+              <option value="Gcash">Gcash</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" onclick="closeLoyaltyModal()" class="cancel-btn">Cancel</button>
+          <button type="button" onclick="submitLoyaltyEntry()" class="save-btn" data-requires-ready="true">Save Sales</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPENSE MODAL -->
+  <div id="expenseModal" class="modal">
+    <div class="modal-content" style="max-width:560px;">
+      <div class="entry-modal-header">
+        <h2 class="entry-modal-title" id="expenseModalTitle">Add Expense</h2>
+        <div class="entry-modal-subtitle" id="expenseModalSubtitle">Create a new expense entry</div>
+      </div>
+      <div class="entry-modal-body">
+        <div class="form-grid">
+          <div class="field-block">
+            <label class="field-label" for="expenseDate">Date</label>
+            <input type="date" id="expenseDate" />
+          </div>
+          <div class="field-block full">
+            <label class="field-label" for="expenseParticularsSelect">Particulars</label>
+            <select id="expenseParticularsSelect" onchange="toggleExpenseOtherField()">
+              <option value="">Select Particulars</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Supplies">Supplies</option>
+              <option value="Rent">Rent</option>
+              <option value="Salary Adjustment">Salary Adjustment</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field-block full" id="expenseOtherWrap" style="display:none;">
+            <label class="field-label" for="expenseOtherParticulars">Specify Other</label>
+            <input type="text" id="expenseOtherParticulars" placeholder="Enter particulars" />
+          </div>
+          <div class="field-block full">
+            <label class="field-label" for="expenseAmount">Amount</label>
+            <input type="text" id="expenseAmount" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" onclick="closeExpenseModal()" class="cancel-btn">Cancel</button>
+          <button type="button" onclick="submitExpense()" class="save-btn" data-requires-ready="true">Save Expense</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-nav">
+    <button type="button" onclick="showSection('homeSection',this)" class="active">
+      <div class="nav-icon"><i class="fas fa-house"></i></div>
+      <span>Home</span>
+    </button>
+
+    <button type="button" onclick="showSection('mainSection',this)">
+      <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+      <span>Sales</span>
+    </button>
+
+    <button type="button" onclick="showSection('summarySection',this)">
+      <div class="nav-icon"><i class="fas fa-chart-pie"></i></div>
+      <span>Summary</span>
+    </button>
+
+    <button type="button" onclick="showSection('salarySection',this)">
+      <div class="nav-icon"><i class="fas fa-wallet"></i></div>
+      <span>Salary</span>
+    </button>
+
+    <button type="button" onclick="showSection('expensesSection',this)">
+      <div class="nav-icon"><i class="fas fa-receipt"></i></div>
+      <span>Expenses</span>
+    </button>
+
+    <button type="button" onclick="showSection('loyaltySection',this)">
+      <div class="nav-icon"><i class="fas fa-heart"></i></div>
+      <span>Loyalty Card</span>
+    </button>
+
+    <button type="button" onclick="showSection('settingsSection',this)">
+      <div class="nav-icon"><i class="fas fa-gear"></i></div>
+      <span>Control Panel</span>
+    </button>
+
+    <button type="button" onclick="logoutUser()" style="margin-top:10px; background:#dc2626; color:white;">Logout</button>
+  </div>
+</div>
+
+  <!-- CONTENT -->
+  <div class="content-area">
+
+    <!-- HOME -->
+<div id="homeSection" class="content-section">
+  <div class="sticky-top-wrapper">
+    <div class="header-box">
+      <img src="https://lh3.googleusercontent.com/d/1jyHb-Tai1rvi994H_8G2ppe2ui_-e_-r" class="header-logo" alt="Logo" onerror="this.style.display='none'">
+      <div class="header-text">
+        <div class="header-title">Dashboard</div>
+      </div>
+    </div>
+    <div class="branch-header">
+      <div id="homeBranchName"></div>
+    </div>
+  </div>
+
+  <div class="summary-section-grid" style="margin-top:12px;">
+    <div class="summary-section-card blue">
+      <div class="summary-section-label">Clients This Week</div>
+      <div class="summary-section-value" id="clientCount">0</div>
+    </div>
+    <div class="summary-section-card amber">
+      <div class="summary-section-label">Today Clients</div>
+      <div class="summary-section-value" id="homeTodayClients">0</div>
+    </div>
+    <div class="summary-section-card purple">
+      <div class="summary-section-label">Weekly Gross</div>
+      <div class="summary-section-value" id="homeWeeklyGross">&#8369;0.00</div>
+    </div>
+    <div class="summary-section-card green">
+      <div class="summary-section-label">Weekly Net</div>
+      <div class="summary-section-value" id="homeWeeklyNet">&#8369;0.00</div>
+    </div>
+  </div>
+
+  <div class="controls" style="margin-bottom:18px;">
+    <div class="therapist-title" style="margin:0;">Performance</div>
+    <div class="control-actions">
+      <button class="nav-btn" type="button" onclick="setPerformanceView('weekly')">Weekly</button>
+      <button class="nav-btn" type="button" onclick="setPerformanceView('daily')">Daily</button>
+    </div>
+  </div>
+
+  <div class="summary-section-grid" style="grid-template-columns:1.1fr 1fr; align-items:start;">
+    <div class="summary-section-card">
+      <div class="summary-section-label">Daily Client Breakdown</div>
+      <div id="clientDailyList">
+        <div class="performance-day-row"><span>No entries yet</span></div>
+      </div>
+    </div>
+
+    <div class="summary-section-card">
+      <div class="summary-section-label">Performance per Therapist</div>
+      <div id="therapistClientList">
+        <div class="performance-day-row"><span>No data yet</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+    <div id="mainSection" class="content-section" style="display:none;">
+      <div class="sticky-top-wrapper">
+        <div class="controls">
+          <div class="week-badge" id="weekLabel">Week: --</div>
+          <div class="control-actions">
+            <div class="week-controls">
+              <button type="button" class="nav-btn" onclick="goPreviousWeek()">&#8592; Previous</button>
+              <button type="button" class="nav-btn" onclick="goActiveWeek()">Current</button>
+            </div>
+            <button type="button" class="nav-btn" onclick="openEntryModal()" style="background:#10b981;" data-requires-ready="true">+ New Entry</button>
+          </div>
+        </div>
+      </div>
+      <div class="table-scroll-wrap">
+        <table class="main-table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Time Slot</th><th>Name of Client</th><th>Therapist</th>
+              <th>Wellness Option</th><th>Services</th><th>Other Services</th><th>Addons</th>
+              <th>Total</th><th>Net</th><th>Therapist Share</th><th>Mode of Payment</th><th>Discount</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="14" style="color:#9ca3af;font-style:italic;">No entries yet for this week.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+
+
+    </div>
+
+    <!-- LOYALTY CARD -->
+    <div id="loyaltySection" class="content-section" style="display:none;">
+      <div class="sticky-top-wrapper">
+        <div class="controls">
+          <div class="week-badge" id="loyaltyWeekLabel">Week: --</div>
+          <div class="control-actions">
+            <div class="week-controls">
+              <button type="button" class="nav-btn" onclick="goPreviousLoyaltyWeek()">&#8592; Previous</button>
+              <button type="button" class="nav-btn" onclick="goActiveLoyaltyWeek()">Current</button>
+            </div>
+            <button type="button" class="nav-btn" onclick="openLoyaltyEntryModal()" style="background:#10b981;" data-requires-ready="true">+ New Sales</button>
+          </div>
+        </div>
+      </div>
+      <div style="width: 100%;">
+        <table style="width: 100%; table-layout: auto; font-size: 13px; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding: 10px 16px; font-size: 12px; background: #132e4f; color: white; border: none;">Date</th><th style="padding: 10px 16px; font-size: 12px; background: #132e4f; color: white; border: none;">Name</th><th style="padding: 10px 16px; font-size: 12px; background: #132e4f; color: white; border: none;">Total</th><th style="padding: 10px 16px; font-size: 12px; background: #132e4f; color: white; border: none;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="loyaltyTableBody" style="font-size: 13px;">
+            <tr><td colspan="4" style="color:#9ca3af;font-style:italic;text-align:center;padding: 10px 16px;">No loyalty sales yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="summarySection" class="content-section" style="display:none;">
+      <h2 class="therapist-title">Weekly Summary</h2>
+      <div class="controls" style="margin-bottom:18px;">
+        <div class="week-badge" id="summaryWeekLabel">Week: --</div>
+        <div class="control-actions">
+          <button type="button" class="nav-btn" onclick="goPreviousSummaryWeek()">&#8592; Previous</button>
+          <button type="button" class="nav-btn" onclick="goCurrentSummaryWeek()">Current</button>
+        </div>
+      </div>
+      <div class="summary-section-grid">
+        <div class="summary-section-card blue"><div class="summary-section-label">Gross Sales</div><div class="summary-section-value" id="summaryGross">&#8369;0.00</div></div>
+        <div class="summary-section-card amber"><div class="summary-section-label">Total Expenses</div><div class="summary-section-value" id="summaryExpenses">&#8369;0.00</div></div>
+        <div class="summary-section-card purple"><div class="summary-section-label">Total Salary</div><div class="summary-section-value" id="summarySalary">&#8369;0.00</div></div>
+        <div class="summary-section-card green"><div class="summary-section-label">Net Profit</div><div class="summary-section-value" id="summaryNet">&#8369;0.00</div></div>
+      </div>
+      <h3 class="therapist-title" style="margin-top:8px;">Daily Breakdown</h3>
+      <div class="table-scroll-wrap" style="margin-bottom:20px;">
+        <table style="min-width:700px;">
+          <thead><tr><th style="text-align:left;">Date</th><th>Gross Sales</th><th>Total Daily Expenses</th><th>Salary</th><th>Net Sales</th></tr></thead>
+          <tbody id="summaryDailyBody"><tr><td colspan="5" style="color:#9ca3af;font-style:italic;">No data for this week.</td></tr></tbody>
+        </table>
+      </div>
+      <h3 class="therapist-title" style="margin-top:8px;">Payment Log</h3>
+      <div class="table-scroll-wrap" style="margin-bottom:20px;">
+        <table style="min-width:600px;">
+          <thead><tr><th style="text-align:left;">Date</th><th>Cash</th><th>Gcash</th></tr></thead>
+          <tbody id="summaryPaymentBody"><tr><td colspan="3" style="color:#9ca3af;font-style:italic;">No payment data for this week.</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-top:18px;">
+        <h3 class="therapist-title" style="margin:0;">Therapist Breakdown</h3>
+        <button type="button" class="nav-btn" onclick="downloadPayrollPDF()">Download Payroll PDF</button>
+      </div>
+      <div class="table-scroll-wrap">
+        <table class="summary-therapist-table">
+          <thead>
+            <tr>
+              <th>Therapist</th><th>Gross</th><th>SSS</th><th>Pag-IBIG</th>
+              <th>PhilHealth</th><th>Tardiness</th><th>Miscellaneous</th><th>BONDS</th><th>Net Salary</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTherapistBody">
+            <tr><td colspan="8" style="color:#9ca3af;font-style:italic;">No data for this week.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALARY -->
+    <div id="salarySection" class="content-section" style="display:none;">
+      <h2 class="therapist-title">Therapist Weekly Salary</h2>
+      <div class="controls">
+        <div class="week-badge" id="salaryWeekLabel">Week: --</div>
+        <div class="control-actions">
+          <button type="button" class="nav-btn" onclick="goPreviousSalaryWeek()">&#8592; Previous</button>
+          <button type="button" class="nav-btn" onclick="goCurrentSalaryWeek()">Current</button>
+        </div>
+      </div>
+      <div class="table-scroll-wrap" style="margin-bottom:24px;">
+        <table class="salary-table">
+          <thead id="therapistTableHead"><tr><th>Therapist</th><th colspan="8">Loading...</th></tr></thead>
+          <tbody id="therapistTableBody"><tr><td colspan="9" style="color:#9ca3af;font-style:italic;">No data loaded.</td></tr></tbody>
+        </table>
+      </div>
+      <h3 class="therapist-title" style="font-size:18px;">Salary Deductions</h3>
+      <div class="table-scroll-wrap" style="margin-bottom:20px;">
+        <table class="salary-table" style="min-width:800px;">
+          <thead>
+  <tr>
+    <th>Therapist</th>
+    <th>SSS</th>
+    <th>Pag-IBIG</th>
+    <th>PhilHealth</th>
+    <th>Tardiness Minutes</th>
+    <th>Miscellaneous</th>
+    <th>Bonds</th>
+  </tr>
+</thead>
+<tbody id="salaryDeductionBody">
+  <tr>
+    <td colspan="7" style="color:#9ca3af;font-style:italic;">No therapists available.</td>
+  </tr>
+</tbody>
+        </table>
+      </div>
+      <h3 class="therapist-title" style="font-size:18px;">Bonds</h3>
+      <div class="table-scroll-wrap" style="margin-bottom:20px;">
+        <table class="salary-table" style="min-width:500px;">
+          <thead>
+            <tr>
+              <th>Therapist</th>
+              <th>Bonds</th>
+            </tr>
+          </thead>
+          <tbody id="bondsTableBody">
+            <tr>
+              <td colspan="2" style="color:#9ca3af;font-style:italic;">No therapists available.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EXPENSES -->
+    <div id="expensesSection" class="content-section" style="display:none;">
+      <h2 class="therapist-title">Expenses</h2>
+      <div class="controls">
+        <div class="week-badge" id="expensesWeekLabel">Week: --</div>
+        <div class="control-actions">
+          <button type="button" class="nav-btn" onclick="goPreviousExpensesWeek()">&#8592; Previous</button>
+          <button type="button" class="nav-btn" onclick="goCurrentExpensesWeek()">Current</button>
+        </div>
+        <button type="button" class="nav-btn" onclick="openExpenseModal()" style="background:#10b981;" data-requires-ready="true">+ New Expense</button>
+      </div>
+      <div class="table-scroll-wrap">
+        <table class="expenses-table">
+          <thead><tr><th>Date</th><th>Particulars</th><th>Amount</th><th>Action</th></tr></thead>
+          <tbody id="expensesTableBody"><tr><td colspan="4" style="color:#9ca3af;font-style:italic;">No expenses for this week.</td></tr></tbody>
+        </table>
+      </div>
+      <div id="payablesReminderBox" style="display:none;margin-top:18px;background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:16px 18px;">
+        <div style="font-size:18px;font-weight:800;color:#9a3412;margin-bottom:8px;">Payables Reminder</div>
+        <div style="font-size:14px;color:#7c2d12;line-height:1.6;">
+          <div><strong>Company Contribution Total:</strong> <span id="companyContributionTotal">&#8369;0.00</span></div>
+          <div><strong>Included Therapists:</strong> <span id="companyContributionNames">None</span></div>
+        </div>
+        <button onclick="markPayablesPaid()" style="margin-top:12px;padding:8px 16px;background:#dc2626;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">DONE</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsSection" class="content-section" style="display:none;">
+      <h2 class="therapist-title">Control Panel</h2>
+      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#856404;">
+        <strong>&#9888; Settings are auto-saved to Firebase.</strong> Changes take effect immediately when adding new entries.
+      </div>
+      <div class="settings-tabs">
+        <button type="button" class="settings-tab-btn active" onclick="showSettingsTab('servicesTab',this)">Services</button>
+        <button type="button" class="settings-tab-btn" onclick="showSettingsTab('addonsTab',this)">Add-Ons</button>
+        <button type="button" class="settings-tab-btn" onclick="showSettingsTab('otherServicesTab',this)">Other Services</button>
+        <button type="button" class="settings-tab-btn" onclick="showSettingsTab('therapistTab',this)">Therapist</button>
+        <button type="button" class="settings-tab-btn" onclick="showSettingsTab('rulesTab',this)">Rules</button>
+      </div>
+
+      <div id="servicesTab" class="settings-tab-content">
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addServiceRow()">+ Add Service</button></div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead><tr><th>Service</th><th>Price</th><th>Time Slot</th><th>Category</th><th>Action</th></tr></thead>
+            <tbody id="servicesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="addonsTab" class="settings-tab-content" style="display:none;">
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addAddonRow()">+ Add Add-On</button></div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead><tr><th>Add-On</th><th>Price</th><th>Time Slot</th><th>Category</th><th>Action</th></tr></thead>
+            <tbody id="addonsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="otherServicesTab" class="settings-tab-content" style="display:none;">
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addOtherServiceRow()">+ Add Other Service</button></div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead><tr><th>Other Service</th><th>Price</th><th>Time Slot</th><th>Category</th><th>Action</th></tr></thead>
+            <tbody id="otherServicesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="therapistTab" class="settings-tab-content" style="display:none;">
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addTherapistRow()">+ Add Therapist</button></div>
+        <div class="settings-table-wrap therapist-only-wrap">
+          <table class="settings-table therapist-table-full">
+            <thead><tr><th>Therapist</th><th>Action</th></tr></thead>
+            <tbody id="therapistSettingsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="rulesTab" class="settings-tab-content" style="display:none;">
+        <h3 class="therapist-title" style="font-size:18px;margin-top:0;">Commission Settings</h3>
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addShareRow()">+ Edit Commission</button></div>
+        <div class="settings-table-wrap" style="margin-bottom:24px;">
+          <table class="settings-table">
+            <thead><tr><th>Type</th><th>Rate (%)</th><th>Action</th></tr></thead>
+            <tbody id="shareTableBody"></tbody>
+          </table>
+        </div>
+
+        <h3 class="therapist-title" style="font-size:18px;">Discount Settings</h3>
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addDiscountRow()">+ Add Discount</button></div>
+        <div class="settings-table-wrap" style="margin-bottom:24px;">
+          <table class="settings-table">
+            <thead><tr><th>Type</th><th>Value</th><th>Mode (fixed/percent)</th><th>Action</th></tr></thead>
+            <tbody id="discountTableBody"></tbody>
+          </table>
+        </div>
+
+        <h3 class="therapist-title" style="font-size:18px;">Contributions</h3>
+        <div class="settings-actions"><button type="button" class="nav-btn" onclick="addDeductionRow()">+ Add Contribution</button></div>
+        <div class="settings-table-wrap">
+          <table class="settings-table">
+            <thead><tr><th>Particulars</th><th>Therapist Share (&#8369;)</th><th>Company Share (&#8369;)</th><th>Action</th></tr></thead>
+            <tbody id="deductionTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="system-footer">
+      <div class="footer-left">De-Stress Massage &amp; Spa Operation Dashboard</div>
+      <div class="footer-right">System Version 2.0 • 2026 Developed by AFV</div>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL -->
+  <div id="customModal" class="confirm-modal">
+    <div class="confirm-modal-content">
+      <p id="modalMessage">Are you sure?</p>
+      <div class="modal-buttons">
+        <button id="modalOk">OK</button>
+        <button id="modalCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+  /* ============================================================
+     FIREBASE INIT
+  ============================================================ */
+  (function () {
+    var cfg = {
+      apiKey: "AIzaSyDjDwiJ_9eV_RwF7br2e2kLwld0QDNa5Ig",
+      authDomain: "de-stress-pos.firebaseapp.com",
+      projectId: "de-stress-pos",
+      storageBucket: "de-stress-pos.firebasestorage.app",
+      messagingSenderId: "350330490012",
+      appId: "1:350330490012:web:0bd1496a576ae25caf7159",
+      measurementId: "G-E45Y95SJ1M"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+
+    window.db = firebase.firestore();
+    window.auth = firebase.auth();
+
+    window.db.settings({
+      experimentalForceLongPolling: true,
+      useFetchStreams: false
+    });
+
+    window.firebaseReady = Promise.resolve();
+  })();
+</script>
+
+  <script>
+  /* ============================================================
+     BRANCH CONFIG
+  ============================================================ */
+  var CURRENT_BRANCH = "Panabo City Main Branch";
+  var LEGACY_BRANCH  = "Panabo Main Branch";
+  var CURRENT_USER_PROFILE = null;
+
+  var appReady = false;
+  var unsubEntries = null;
+  var unsubExpenses = null;
+  var unsubLoyalty = null;
+  var unsubSalaryAdj = null;
+  var unsubSettings = null;
+  var unsubPayablesPaid = null;
+
+  var DB = {
+    entries: [],
+    expenses: [],
+    loyalty: [],
+    salaryAdjustments: [],
+    settings: null
+  };
+
+  var payablesPaid = {};
+
+  var DEFAULT_SETTINGS = {
+    services: [
+      { name:"75 Mins Massage Morning", price:"330", timeSlot:"Morning", category:"Spa" },
+      { name:"75 Mins Massage Evening", price:"380", timeSlot:"Evening", category:"Spa" },
+      { name:"105 Mins Massage",        price:"800", timeSlot:"",        category:"Home Service" }
+    ],
+    addons: [
+      { name:"Ventosa",         price:"150", timeSlot:"Morning", category:"Spa" },
+      { name:"Hot Stone(Back)", price:"150", timeSlot:"Evening", category:"Spa" },
+      { name:"Ventosa HS",      price:"200", timeSlot:"",        category:"Home Service" }
+    ],
+    otherServices: [
+      { name:"Foot Spa/Pedi",    price:"330", timeSlot:"", category:"Spa" },
+      { name:"Gel Removal",      price:"100", timeSlot:"", category:"Spa" },
+      { name:"Foot Spa/Pedi HS", price:"430", timeSlot:"", category:"Home Service" }
+    ],
+    therapists: [{ name:"Ana" }, { name:"Joy" }, { name:"Mira" }],
+    share: [
+      { type:"Spa",          rate: 35 },
+      { type:"Home Service", rate: 40 }
+    ],
+    discount: [
+      { type:"Senior Citizen", value: 20,  mode:"percent" },
+      { type:"Promo Less 100", value: 100, mode:"fixed"   }
+    ],
+    deductions: [
+      { name:"SSS",                  therapistShare: 375, companyShare: 375 },
+      { name:"Pag-IBIG",             therapistShare: 200, companyShare: 200 },
+      { name:"PhilHealth",           therapistShare: 375, companyShare: 375 },
+      { name:"Tardiness Per Minute", therapistShare: 0,   companyShare: 0   }
+    ]
+  };
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  var currentWeekStart  = null, currentWeekEnd  = null;
+  var salaryWeekStart   = null, salaryWeekEnd   = null;
+  var summaryWeekStart  = null, summaryWeekEnd  = null;
+  var expensesWeekStart = null, expensesWeekEnd = null;
+  var loyaltyWeekStart  = null, loyaltyWeekEnd  = null;
+
+  var editingEntryId   = null;
+  var editingExpenseId = null;
+  var editingLoyaltyId = null;
+  var selectedServices = [], selectedAddons = [], selectedOtherServices = [];
+  var currentPerformanceView = "weekly";
+
+  /* ============================================================
+     SYNC STATUS
+  ============================================================ */
+  var syncTimer = null;
+  function showSyncStatus(msg, type) {
+    var el = document.getElementById("syncStatus");
+    if (!el) return;
+    el.innerText = msg;
+    el.className = "show " + (type || "");
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){ el.className = ""; }, 3500);
+  }
+
+  function setAppReady(ready) {
+    appReady = !!ready;
+    document.querySelectorAll("[data-requires-ready='true']").forEach(function(el){
+      el.disabled = !appReady;
+    });
+  }
+
+    function setLoginMessage(msg, isError){
+    var el = document.getElementById("loginMsg");
+    if(!el) return;
+    el.style.color = isError ? "#dc2626" : "#059669";
+    el.textContent = msg || "";
+  }
+
+  function usernameToEmail(loginName){
+    return String(loginName || "").trim().toLowerCase() + "@yourapp.local";
+  }
+
+  function showLoginScreen(){
+    var loginScreen = document.getElementById("loginScreen");
+    if(loginScreen) loginScreen.style.display = "flex";
+
+    var sidebar = document.querySelector(".sidebar");
+    var contentArea = document.querySelector(".content-area");
+
+    if(sidebar) sidebar.style.display = "none";
+    if(contentArea) contentArea.style.display = "none";
+
+    setAppReady(false);
+  }
+
+  function showDashboardScreen(){
+    var loginScreen = document.getElementById("loginScreen");
+    if(loginScreen) loginScreen.style.display = "none";
+
+    var sidebar = document.querySelector(".sidebar");
+    var contentArea = document.querySelector(".content-area");
+
+    if(sidebar) sidebar.style.display = "";
+    if(contentArea) contentArea.style.display = "";
+
+    setAppReady(true);
+  }
+
+  async function loadUserProfile(uid){
+  console.log("UID passed to loadUserProfile:", uid);
+
+  if(!uid){
+    throw new Error("UID is missing");
+  }
+
+  var userDoc = await window.db.collection("users").doc(uid).get();
+
+  if(!userDoc.exists){
+    throw new Error("Profile not found");
+  }
+
+  var data = userDoc.data() || {};
+  console.log("USER PROFILE DATA:", data);
+
+  if(!data.active){
+    throw new Error("This account is inactive.");
+  }
+
+  CURRENT_USER_PROFILE = data;
+  CURRENT_BRANCH = data.branch || "";
+  LEGACY_BRANCH = data.branch || "";
+
+  if(!CURRENT_BRANCH){
+    throw new Error("Branch is missing in user profile.");
+  }
+
+  var branchNameEl = document.getElementById("homeBranchName");
+  if(branchNameEl) branchNameEl.textContent = CURRENT_BRANCH;
+}
+
+  async function loginUser(){
+    var loginName = (document.getElementById("loginName").value || "").trim();
+    var password = document.getElementById("loginPassword").value || "";
+
+    if(!loginName || !password){
+      setLoginMessage("Please enter login name and password.", true);
+      return;
+    }
+
+    setLoginMessage("Signing in...", false);
+
+    try{
+      var email = usernameToEmail(loginName);
+      await window.auth.signInWithEmailAndPassword(email, password);
+      showSyncStatus("Login successful ✓", "ok");
+      setLoginMessage("");
+    }catch(err){
+      console.error("Login failed:", err);
+      setLoginMessage(err.message || "Login failed.", true);
+    }
+  }
+
+  async function logoutUser(){
+    try{
+      if (unsubEntries) unsubEntries();
+      if (unsubExpenses) unsubExpenses();
+      if (unsubLoyalty) unsubLoyalty();
+      if (unsubSalaryAdj) unsubSalaryAdj();
+      if (unsubSettings) unsubSettings();
+      if (unsubPayablesPaid) unsubPayablesPaid();
+
+      unsubEntries = null;
+      unsubExpenses = null;
+      unsubLoyalty = null;
+      unsubSalaryAdj = null;
+      unsubSettings = null;
+      unsubPayablesPaid = null;
+
+      DB.entries = [];
+      DB.expenses = [];
+      DB.loyalty = [];
+      DB.salaryAdjustments = [];
+      DB.settings = null;
+      payablesPaid = {};
+
+      CURRENT_USER_PROFILE = null;
+      CURRENT_BRANCH = "";
+      LEGACY_BRANCH = "";
+
+      await window.auth.signOut();
+
+      var loginNameEl = document.getElementById("loginName");
+      var passwordEl = document.getElementById("loginPassword");
+      if(loginNameEl) loginNameEl.value = "";
+      if(passwordEl) passwordEl.value = "";
+
+      showLoginScreen();
+      setLoginMessage("");
+      showSyncStatus("Logged out", "ok");
+    }catch(err){
+      console.error("Logout failed:", err);
+      showSyncStatus("Logout failed", "err");
+    }
+  }
+
+  function initAuthListener(){
+    window.auth.onAuthStateChanged(async function(user){
+      if(!user){
+        showLoginScreen();
+        return;
+      }
+
+      try{
+        await loadUserProfile(user.uid);
+        await ensureSettingsDocExists();
+        startRealtimeSync();
+        showDashboardScreen();
+        showSection("homeSection", document.querySelector(".sidebar button"));
+        showSyncStatus("Connected to Firebase ✓", "ok");
+      }catch(err){
+        console.error("Auth init failed:", err);
+        await window.auth.signOut();
+        showLoginScreen();
+        setLoginMessage(err.message || "Unable to load account.", true);
+      }
+    });
+  }
+
+  /* ============================================================
+     HELPERS
+  ============================================================ */
+  function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+  function formatMoney(v){ return Number(v||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function parseMoney(v){
+    if(v === null || v === undefined || v === "") return 0;
+    if(typeof v === "number") return isNaN(v) ? 0 : v;
+    var s=String(v).trim();
+    var negative=false;
+    if(s.indexOf("(") !== -1 && s.indexOf(")") !== -1) negative=true;
+    if(/(^|[^\d])-/.test(s)) negative=true;
+    s=s.replace(/[^\d.]/g,"");
+    var n=parseFloat(s);
+    if(isNaN(n)) return 0;
+    return negative ? -n : n;
+  }
+  function formatPeso(v){
+    var num=Number(v||0);
+    if(isNaN(num)) num=0;
+    return (num<0?"-\u20B1":"\u20B1") + formatMoney(Math.abs(num));
+  }
+  function escapeHtml(t){ return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
+  function formatDateDisplay(ds){
+    if(!ds) return "";
+    var p = ds.split("-");
+    if(p.length!==3) return ds;
+    return new Date(Number(p[0]), Number(p[1])-1, Number(p[2])).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  }
+  function formatDateLabel(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }
+  function dateToYMD(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function setText(id,val){ var el=document.getElementById(id); if(el) el.innerText=val; }
+
+  function normalizeSettings(data){
+    return {
+      services:      Array.isArray(data && data.services)      ? data.services      : deepClone(DEFAULT_SETTINGS.services),
+      addons:        Array.isArray(data && data.addons)        ? data.addons        : deepClone(DEFAULT_SETTINGS.addons),
+      otherServices: Array.isArray(data && data.otherServices) ? data.otherServices : deepClone(DEFAULT_SETTINGS.otherServices),
+      therapists:    Array.isArray(data && data.therapists)    ? data.therapists    : deepClone(DEFAULT_SETTINGS.therapists),
+      share:         Array.isArray(data && data.share)         ? data.share         : deepClone(DEFAULT_SETTINGS.share),
+      discount:      Array.isArray(data && data.discount)      ? data.discount      : deepClone(DEFAULT_SETTINGS.discount),
+      deductions:    Array.isArray(data && data.deductions)    ? data.deductions    : deepClone(DEFAULT_SETTINGS.deductions)
+    };
+  }
+
+  function renderBondsTable(){
+  var tbody = document.getElementById("bondsTableBody");
+  if(!tbody || !salaryWeekStart || !DB.settings) return;
+
+  var names = (DB.settings.therapists || [])
+    .map(function(t){ return t.name; })
+    .filter(Boolean)
+    .sort();
+
+  if(!names.length){
+    tbody.innerHTML = '<tr><td colspan="2" style="color:#9ca3af;font-style:italic;">No therapists available.</td></tr>';
+    return;
+  }
+
+  var weekKey = dateToYMD(salaryWeekStart);
+  tbody.innerHTML = "";
+
+  names.forEach(function(name){
+    var rec = getSalaryAdjustmentRecord(name, weekKey);
+    var bonds = Number(rec.bonds) || 0;
+
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      "<td style='text-align:left;font-weight:700;'>"+escapeHtml(name)+"</td>" +
+      '<td class="money-cell"><span class="money-value">'+formatPeso(bonds)+'</span></td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+  function normalizeEntry(item, fallbackId){
+    return {
+      id: item && item.id ? String(item.id) : String(fallbackId || ""),
+      date: item && item.date ? String(item.date) : "",
+      timeSlot: item && item.timeSlot ? String(item.timeSlot) : "",
+      client: item && item.client ? String(item.client) : "",
+      therapist: item && item.therapist ? String(item.therapist) : "",
+      wellness: item && item.wellness ? String(item.wellness) : "",
+      services: Array.isArray(item && item.services) ? item.services : [],
+      addons: Array.isArray(item && item.addons) ? item.addons : [],
+      otherServices: Array.isArray(item && item.otherServices) ? item.otherServices : [],
+      total: Number(item && item.total || 0),
+      therapistShare: Number(item && item.therapistShare || 0),
+      net: Number(item && item.net || 0),
+      payment: item && item.payment ? String(item.payment) : "",
+      discount: item && item.discount ? String(item.discount) : "",
+      cashAmount: Number(item && item.cashAmount || 0),
+      gcashAmount: Number(item && item.gcashAmount || 0)
+    };
+  }
+
+  function normalizeExpense(item, fallbackId){
+    return {
+      id: item && item.id ? String(item.id) : String(fallbackId || ""),
+      date: item && item.date ? String(item.date) : "",
+      particulars: item && item.particulars ? String(item.particulars) : "",
+      amount: Number(item && item.amount || 0)
+    };
+  }
+
+  function normalizeLoyalty(item, fallbackId){
+    return {
+      id: item && item.id ? String(item.id) : String(fallbackId || ""),
+      date: item && item.date ? String(item.date) : "",
+      client: item && item.client ? String(item.client) : "",
+      amount: Number(item && item.amount || 0),
+      payment: item && item.payment ? String(item.payment) : ""
+    };
+  }
+
+  function normalizeSalaryAdjustment(item){
+    return {
+      therapist: item && item.therapist ? String(item.therapist) : "",
+      weekStart: item && item.weekStart ? String(item.weekStart) : "",
+      sss: !!(item && item.sss),
+      pagibig: !!(item && item.pagibig),
+      philhealth: !!(item && item.philhealth),
+      tardinessMinutes: Number(item && item.tardinessMinutes || 0),
+      miscellaneous: Number(item && item.miscellaneous || 0),
+      bonds: Number(item && item.bonds || 0)
+    };
+  }
+
+  /* ============================================================
+     WEEK HELPERS
+  ============================================================ */
+  function getActiveWeekRange(baseDate = new Date()){
+  const date = new Date(baseDate);
+  date.setHours(0,0,0,0);
+
+  const day = date.getDay(); // 0 = Sunday, 6 = Saturday
+
+  // 🔥 convert to Saturday-based index
+  const diffToSaturday = (day === 6) ? 0 : day + 1;
+
+  const start = new Date(date);
+  start.setDate(date.getDate() - diffToSaturday);
+  start.setHours(0,0,0,0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23,59,59,999);
+
+  return { start, end };
+}
+
+  function shiftWeek(s,e,dir){
+    var ns=new Date(s); ns.setDate(ns.getDate()+dir*7); ns.setHours(0,0,0,0);
+    var ne=new Date(e); ne.setDate(ne.getDate()+dir*7); ne.setHours(23,59,59,999);
+    return {start:ns,end:ne};
+  }
+
+  function isInWeek(ds, wS, wE){
+    if (!ds || !wS || !wE) return false;
+    var p = ds.split("-");
+    if (p.length !== 3) return false;
+
+    var d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+    d.setHours(12,0,0,0);
+
+    var start = new Date(wS);
+    var end = new Date(wE);
+    start.setHours(0,0,0,0);
+    end.setHours(23,59,59,999);
+
+    return d >= start && d <= end;
+  }
+
+  /* ============================================================
+     FIREBASE SAVE FUNCTIONS
+  ============================================================ */
+  async function saveSettingsToFirebase() {
+    try {
+      await window.db.collection("settings").doc(CURRENT_BRANCH).set(
+        Object.assign({}, DB.settings, { updatedAt: new Date().toISOString() }),
+        { merge: true }
+      );
+      showSyncStatus("Settings saved ✓", "ok");
+    } catch(err) {
+      console.error("Settings save error:", err);
+      showSyncStatus("Settings save failed", "err");
+    }
+  }
+
+  async function ensureSettingsDocExists() {
+  try {
+    if(!CURRENT_BRANCH){
+      throw new Error("CURRENT_BRANCH is missing.");
+    }
+
+    var currentRef = window.db.collection("settings").doc(CURRENT_BRANCH);
+    var currentDoc = await currentRef.get();
+
+    if (currentDoc.exists) {
+      return;
+    }
+
+    var templateBranch = "Panabo City Main Branch";
+    var templateRef = window.db.collection("settings").doc(templateBranch);
+    var templateDoc = await templateRef.get();
+
+    var settingsToUse = null;
+
+    if (templateDoc.exists) {
+      var templateData = templateDoc.data() || {};
+
+      settingsToUse = {
+        services: Array.isArray(templateData.services) ? deepClone(templateData.services) : deepClone(DEFAULT_SETTINGS.services),
+        addons: Array.isArray(templateData.addons) ? deepClone(templateData.addons) : deepClone(DEFAULT_SETTINGS.addons),
+        otherServices: Array.isArray(templateData.otherServices) ? deepClone(templateData.otherServices) : deepClone(DEFAULT_SETTINGS.otherServices),
+        therapists: Array.isArray(templateData.therapists) ? deepClone(templateData.therapists) : deepClone(DEFAULT_SETTINGS.therapists),
+        share: Array.isArray(templateData.share) ? deepClone(templateData.share) : deepClone(DEFAULT_SETTINGS.share),
+        discount: Array.isArray(templateData.discount) ? deepClone(templateData.discount) : deepClone(DEFAULT_SETTINGS.discount),
+        deductions: Array.isArray(templateData.deductions) ? deepClone(templateData.deductions) : deepClone(DEFAULT_SETTINGS.deductions)
+      };
+    } else {
+      settingsToUse = deepClone(DEFAULT_SETTINGS);
+    }
+
+    DB.settings = settingsToUse;
+
+    await currentRef.set(
+      Object.assign({}, settingsToUse, {
+        createdAt: new Date().toISOString(),
+        copiedFromBranch: templateDoc.exists ? templateBranch : "DEFAULT_SETTINGS"
+      })
+    );
+
+    console.log("Settings auto-created for branch:", CURRENT_BRANCH);
+    showSyncStatus("Branch settings auto-created ✓", "ok");
+
+  } catch (err) {
+    console.error("Ensure settings doc error:", err);
+    showSyncStatus("Auto settings copy failed", "err");
+  }
+}
+
+  async function saveSalaryAdjToFirebase(rec) {
+    try {
+      var docId = CURRENT_BRANCH + "__" + rec.therapist + "__" + rec.weekStart;
+      await window.db.collection("salaryAdjustments").doc(docId).set(
+        Object.assign({}, rec, { branch: CURRENT_BRANCH, updatedAt: new Date().toISOString() }),
+        { merge: true }
+      );
+    } catch(err) {
+      console.error("Salary adj save error:", err);
+      showSyncStatus("Salary adj save failed", "err");
+    }
+  }
+
+  async function saveEntryToFirebase(entry) {
+    try {
+      await window.db.collection("entries").doc(entry.id).set({
+        branch: CURRENT_BRANCH,
+        id: entry.id,
+        date: entry.date,
+        timeSlot: entry.timeSlot,
+        client: entry.client,
+        therapist: entry.therapist,
+        wellness: entry.wellness,
+        services: entry.services || [],
+        addons: entry.addons || [],
+        otherServices: entry.otherServices || [],
+        total: Number(entry.total || 0),
+        therapistShare: Number(entry.therapistShare || 0),
+        net: Number(entry.net || 0),
+        payment: entry.payment || "",
+        discount: entry.discount || "",
+        cashAmount: Number(entry.cashAmount || 0),
+        gcashAmount: Number(entry.gcashAmount || 0),
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(err) {
+      console.error("Save entry failed:", err);
+      showSyncStatus("Save failed: " + err.message, "err");
+      throw err;
+    }
+  }
+
+  async function updateEntryInFirebase(entry) {
+    try {
+      await window.db.collection("entries").doc(entry.id).set({
+        branch: CURRENT_BRANCH,
+        id: entry.id,
+        date: entry.date,
+        timeSlot: entry.timeSlot,
+        client: entry.client,
+        therapist: entry.therapist,
+        wellness: entry.wellness,
+        services: entry.services || [],
+        addons: entry.addons || [],
+        otherServices: entry.otherServices || [],
+        total: Number(entry.total || 0),
+        therapistShare: Number(entry.therapistShare || 0),
+        net: Number(entry.net || 0),
+        payment: entry.payment || "",
+        discount: entry.discount || "",
+        cashAmount: Number(entry.cashAmount || 0),
+        gcashAmount: Number(entry.gcashAmount || 0),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(err) {
+      console.error("Update entry failed:", err);
+      showSyncStatus("Update failed: " + err.message, "err");
+      throw err;
+    }
+  }
+
+  async function deleteEntryFromFirebase(id) {
+    try { await window.db.collection("entries").doc(id).delete(); }
+    catch(err) { console.error("Delete entry failed:", err); }
+  }
+
+  async function saveExpenseToFirebase(expense) {
+    try {
+      await window.db.collection("expenses").doc(expense.id).set({
+        branch: CURRENT_BRANCH,
+        id: expense.id,
+        date: expense.date,
+        particulars: expense.particulars,
+        amount: Number(expense.amount || 0),
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(err) {
+      console.error("Save expense failed:", err);
+      showSyncStatus("Expense save failed: " + err.message, "err");
+      throw err;
+    }
+  }
+
+  async function updateExpenseInFirebase(expense) {
+    try {
+      await window.db.collection("expenses").doc(expense.id).set({
+        branch: CURRENT_BRANCH,
+        id: expense.id,
+        date: expense.date,
+        particulars: expense.particulars,
+        amount: Number(expense.amount || 0),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch(err) {
+      console.error("Update expense failed:", err);
+      showSyncStatus("Expense update failed: " + err.message, "err");
+      throw err;
+    }
+  }
+
+  async function deleteExpenseFromFirebase(id) {
+    try { await window.db.collection("expenses").doc(id).delete(); }
+    catch(err) { console.error("Delete expense failed:", err); }
+  }
+
+  /* ============================================================
+     REALTIME SUBSCRIPTIONS
+  ============================================================ */
+  function subscribeSettingsRealtime() {
+    if (unsubSettings) unsubSettings();
+
+    unsubSettings = window.db.collection("settings").doc(CURRENT_BRANCH)
+      .onSnapshot(function(doc){
+        if (doc.exists) DB.settings = normalizeSettings(doc.data());
+        else DB.settings = deepClone(DEFAULT_SETTINGS);
+
+        renderSettingsTables();
+        renderDiscountSuggestions();
+        populateTherapistDropdown();
+        refreshAll();
+      }, function(err){
+        console.error("Settings realtime error:", err);
+        DB.settings = deepClone(DEFAULT_SETTINGS);
+        renderSettingsTables();
+        renderDiscountSuggestions();
+        populateTherapistDropdown();
+        refreshAll();
+        showSyncStatus("Settings sync failed", "err");
+      });
+  }
+
+  function subscribeEntriesRealtime() {
+    if (unsubEntries) unsubEntries();
+
+    unsubEntries = window.db.collection("entries")
+      .where("branch", "in", [CURRENT_BRANCH, LEGACY_BRANCH])
+      .onSnapshot(function(snap){
+        var data = [];
+        snap.forEach(function(doc){
+          data.push(normalizeEntry(doc.data(), doc.id));
+        });
+        data.sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); });
+        DB.entries = data;
+        refreshAll();
+      }, function(err){
+        console.error("Entries realtime error:", err);
+        showSyncStatus("Entries sync failed", "err");
+      });
+  }
+
+  function subscribeExpensesRealtime() {
+    if (unsubExpenses) unsubExpenses();
+
+    unsubExpenses = window.db.collection("expenses")
+      .where("branch", "in", [CURRENT_BRANCH, LEGACY_BRANCH])
+      .onSnapshot(function(snap){
+        var data = [];
+        snap.forEach(function(doc){
+          data.push(normalizeExpense(doc.data(), doc.id));
+        });
+        data.sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); });
+        DB.expenses = data;
+        refreshAll();
+      }, function(err){
+        console.error("Expenses realtime error:", err);
+        showSyncStatus("Expenses sync failed", "err");
+      });
+  }
+
+  function subscribeLoyaltyRealtime() {
+    if (unsubLoyalty) unsubLoyalty();
+
+    unsubLoyalty = window.db.collection("loyalty")
+      .where("branch", "==", CURRENT_BRANCH)
+      .onSnapshot(function(snap){
+        var data = [];
+        try {
+          snap.forEach(function(doc){
+            data.push(normalizeLoyalty(doc.data(), doc.id));
+          });
+          data.sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); });
+          DB.loyalty = data;
+          if(loyaltyWeekStart && loyaltyWeekEnd) {
+            refreshLoyaltyTable();
+          }
+          showSyncStatus("Loyalty synced", "ok");
+        } catch(processErr) {
+          console.error("Loyalty data processing error:", processErr);
+          showSyncStatus("Loyalty data error: " + processErr.message, "err");
+        }
+      }, function(err){
+        console.error("Loyalty realtime error:", err);
+        showSyncStatus("Loyalty sync failed: " + err.message, "err");
+      });
+  }
+
+  function subscribeSalaryAdjRealtime() {
+    if (unsubSalaryAdj) unsubSalaryAdj();
+
+    unsubSalaryAdj = window.db.collection("salaryAdjustments")
+      .where("branch", "==", CURRENT_BRANCH)
+      .onSnapshot(function(snap){
+        var data = [];
+        snap.forEach(function(doc){
+          data.push(normalizeSalaryAdjustment(doc.data()));
+        });
+        DB.salaryAdjustments = data;
+        refreshAll();
+      }, function(err){
+        console.error("Salary adjustments realtime error:", err);
+        showSyncStatus("Salary adjustments sync failed", "err");
+      });
+  }
+
+  function subscribePayablesPaidRealtime() {
+    if (unsubPayablesPaid) unsubPayablesPaid();
+
+    unsubPayablesPaid = window.db.collection("payablesPaid")
+      .where("branch", "==", CURRENT_BRANCH)
+      .onSnapshot(function(snap){
+        payablesPaid = {};
+        snap.forEach(function(doc){
+          payablesPaid[doc.id] = true;
+        });
+        refreshAll();
+      }, function(err){
+        console.error("Payables paid realtime error:", err);
+        showSyncStatus("Payables paid sync failed", "err");
+      });
+  }
+
+  function startRealtimeSync() {
+    subscribeSettingsRealtime();
+    subscribeEntriesRealtime();
+    subscribeExpensesRealtime();
+    subscribeLoyaltyRealtime();
+    subscribeSalaryAdjRealtime();
+    subscribePayablesPaidRealtime();
+  }
+
+  /* ============================================================
+     SECTION / TAB
+  ============================================================ */
+  function showSection(id, btn){
+  document.querySelectorAll(".content-section").forEach(function(section){
+    section.style.display = "none";
+  });
+
+  var target = document.getElementById(id);
+  if(target) target.style.display = "block";
+
+  document.querySelectorAll(".sidebar button").forEach(function(button){
+    button.classList.remove("active");
+  });
+
+  if(btn) btn.classList.add("active");
+
+  if(id === "homeSection") refreshHomeSection();
+  if(id === "mainSection") { if(!currentWeekStart) { var r=getActiveWeekRange(new Date()); setWeekRange(r.start,r.end); } }
+  if(id === "summarySection")  { if(!summaryWeekStart) { var r=getActiveWeekRange(new Date()); setSummaryWeekRange(r.start,r.end); } refreshSummarySection(); }
+  if(id === "salarySection")   { if(!salaryWeekStart) { var r=getActiveWeekRange(new Date()); setSalaryWeekRange(r.start,r.end); } refreshSalarySection(); }
+  if(id === "expensesSection") { if(!expensesWeekStart) { var r=getActiveWeekRange(new Date()); setExpensesWeekRange(r.start,r.end); } refreshExpensesSection(); }
+  if(id === "loyaltySection")  { if(!loyaltyWeekStart) { var r=getActiveWeekRange(new Date()); setLoyaltyWeekRange(r.start,r.end); } else refreshLoyaltyTable(); }
+  if(id === "settingsSection") renderSettingsTables();
+}
+
+  function showSettingsTab(id,btn){
+    document.querySelectorAll(".settings-tab-content").forEach(function(t){ t.style.display="none"; });
+    var t=document.getElementById(id);
+    if(t) t.style.display="block";
+
+    document.querySelectorAll(".settings-tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    if(btn) btn.classList.add("active");
+  }
+
+  /* ============================================================
+     WEEK NAV
+  ============================================================ */
+  function setWeekRange(s,e){
+    currentWeekStart=new Date(s); currentWeekEnd=new Date(e);
+    setText("weekLabel","Week: "+formatDateLabel(currentWeekStart)+" - "+formatDateLabel(currentWeekEnd));
+    refreshMainTable();
+  }
+  function goPreviousWeek(){ var r=shiftWeek(currentWeekStart,currentWeekEnd,-1); setWeekRange(r.start,r.end); }
+  function goActiveWeek(){ var r=getActiveWeekRange(new Date()); setWeekRange(r.start,r.end); }
+
+  function setSalaryWeekRange(s,e){
+    salaryWeekStart=new Date(s); salaryWeekEnd=new Date(e);
+    setText("salaryWeekLabel","Week: "+formatDateLabel(salaryWeekStart)+" - "+formatDateLabel(salaryWeekEnd));
+    refreshSalarySection();
+  }
+  function goPreviousSalaryWeek(){ var r=shiftWeek(salaryWeekStart,salaryWeekEnd,-1); setSalaryWeekRange(r.start,r.end); }
+  function goCurrentSalaryWeek(){ var r=getActiveWeekRange(new Date()); setSalaryWeekRange(r.start,r.end); }
+
+  function setSummaryWeekRange(s,e){
+    summaryWeekStart=new Date(s); summaryWeekEnd=new Date(e);
+    setText("summaryWeekLabel","Week: "+formatDateLabel(summaryWeekStart)+" - "+formatDateLabel(summaryWeekEnd));
+    refreshSummarySection();
+  }
+  function goPreviousSummaryWeek(){ var r=shiftWeek(summaryWeekStart,summaryWeekEnd,-1); setSummaryWeekRange(r.start,r.end); }
+  function goCurrentSummaryWeek(){ var r=getActiveWeekRange(new Date()); setSummaryWeekRange(r.start,r.end); }
+
+  function setExpensesWeekRange(s,e){
+    expensesWeekStart=new Date(s); expensesWeekEnd=new Date(e);
+    setText("expensesWeekLabel","Week: "+formatDateLabel(expensesWeekStart)+" - "+formatDateLabel(expensesWeekEnd));
+    refreshExpensesSection();
+  }
+  function goPreviousExpensesWeek(){ var r=shiftWeek(expensesWeekStart,expensesWeekEnd,-1); setExpensesWeekRange(r.start,r.end); }
+  function goCurrentExpensesWeek(){ var r=getActiveWeekRange(new Date()); setExpensesWeekRange(r.start,r.end); }
+
+  function setLoyaltyWeekRange(s,e){
+    loyaltyWeekStart=new Date(s); loyaltyWeekEnd=new Date(e);
+    setText("loyaltyWeekLabel","Week: "+formatDateLabel(loyaltyWeekStart)+" - "+formatDateLabel(loyaltyWeekEnd));
+    refreshLoyaltyTable();
+  }
+  function goPreviousLoyaltyWeek(){ var r=shiftWeek(loyaltyWeekStart,loyaltyWeekEnd,-1); setLoyaltyWeekRange(r.start,r.end); }
+  function goActiveLoyaltyWeek(){ var r=getActiveWeekRange(new Date()); setLoyaltyWeekRange(r.start,r.end); }
+
+  function refreshAll(){
+  refreshMainTable();
+  refreshSidebarPerformance();
+  refreshHomeSection();
+  refreshSummarySection();
+  refreshSalarySection();
+  refreshExpensesSection();
+  refreshLoyaltyTable();
+}
+
+  /* ============================================================
+     MAIN TABLE
+  ============================================================ */
+  function renderTagList(items){
+    if(!items || !items.length) return "";
+    var className = items.length > 2 ? "table-tags table-tags-list" : "table-tags";
+    return '<div class="' + className + '">' + items.map(function(i){
+      return '<span class="table-tag">'+escapeHtml(i)+'</span>';
+    }).join("") + '</div>';
+  }
+
+  function refreshMainTable(){
+    var tbody=document.getElementById("tableBody");
+    if(!tbody || !currentWeekStart || !currentWeekEnd) return;
+
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,currentWeekStart,currentWeekEnd); });
+
+    if(!we.length){
+      tbody.innerHTML='<tr><td colspan="14" style="color:#9ca3af;font-style:italic;">No entries yet for this week.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML="";
+    we.slice().sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); }).forEach(function(entry){
+      var tr=document.createElement("tr");
+      tr.dataset.id=entry.id;
+      tr.innerHTML =
+        "<td>"+escapeHtml(formatDateDisplay(entry.date))+"</td>" +
+        "<td>"+escapeHtml(entry.timeSlot)+"</td>" +
+        "<td>"+escapeHtml(entry.client)+"</td>" +
+        "<td>"+escapeHtml(entry.therapist)+"</td>" +
+        "<td>"+escapeHtml(entry.wellness)+"</td>" +
+        "<td>"+renderTagList(entry.services)+"</td>" +
+        "<td>"+renderTagList(entry.otherServices)+"</td>" +
+        "<td>"+renderTagList(entry.addons)+"</td>" +
+        '<td class="money-cell"><span class="money-value">'+formatPeso(entry.total)+'</span></td>' +
+        '<td class="money-cell"><span class="money-value">'+formatPeso(entry.net)+'</span></td>' +
+        '<td class="money-cell"><span class="money-value">'+formatPeso(entry.therapistShare)+'</span></td>' +
+        "<td>"+escapeHtml(entry.payment)+"</td>" +
+        "<td>"+escapeHtml(entry.discount)+"</td>" +
+        '<td>' +
+          '<button class="icon-btn edit-btn" onclick="editEntry(\''+entry.id+'\')" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="icon-btn delete-btn-icon" onclick="deleteEntry(\''+entry.id+'\')" title="Delete"><i class="fas fa-trash"></i></button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function refreshLoyaltyTable(){
+    var tbody=document.getElementById("loyaltyTableBody");
+    if(!tbody) return;
+    
+    var we = DB.loyalty || [];
+    if(loyaltyWeekStart && loyaltyWeekEnd) {
+      we = we.filter(function(e){ return isInWeek(e.date,loyaltyWeekStart,loyaltyWeekEnd); });
+    }
+
+    if(!we.length){
+      tbody.innerHTML='<tr><td colspan="4" style="color:#9ca3af;font-style:italic;">No loyalty sales yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML="";
+    we.slice().sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); }).forEach(function(entry){
+      var tr=document.createElement("tr");
+      tr.dataset.id=entry.id;
+      tr.innerHTML =
+        "<td style=\"padding: 10px 16px;\">"+escapeHtml(formatDateDisplay(entry.date))+"</td>" +
+        "<td style=\"padding: 10px 16px;\">"+escapeHtml(entry.client)+"</td>" +
+        '<td style="padding: 10px 16px;" class="money-cell"><span class="money-value">'+formatPeso(entry.amount)+'</span></td>' +
+        '<td style="padding: 10px 16px;">' +
+          '<button class="icon-btn edit-btn" onclick="editLoyaltyEntry(\''+entry.id+'\')" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="icon-btn delete-btn-icon" onclick="deleteLoyaltyEntry(\''+entry.id+'\')" title="Delete"><i class="fas fa-trash"></i></button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+
+  }
+
+  /* ============================================================
+     SIDEBAR PERFORMANCE
+  ============================================================ */
+  function refreshTherapistWeekly(){
+    if(!currentWeekStart || !currentWeekEnd) return;
+    var list=document.getElementById("therapistClientList");
+    if(!list) return;
+
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,currentWeekStart,currentWeekEnd); });
+    if(!we.length){
+      list.innerHTML='<div class="performance-day-row"><span>No data yet</span></div>';
+      return;
+    }
+
+    var map={};
+    we.forEach(function(e){
+      var t=e.therapist||"Unknown";
+      map[t]=(map[t]||0)+1;
+    });
+
+    var html="";
+    Object.keys(map).sort().forEach(function(name){
+      html += '<div class="performance-day-row"><span class="performance-day-label">'+escapeHtml(name)+'</span><span class="performance-day-value">'+map[name]+'</span></div>';
+    });
+    list.innerHTML=html;
+  }
+
+  function refreshTherapistDaily(){
+    var list=document.getElementById("therapistClientList");
+    if(!list) return;
+
+    var today=dateToYMD(new Date());
+    var te=DB.entries.filter(function(e){ return e.date===today; });
+
+    if(!te.length){
+      list.innerHTML='<div class="performance-day-row"><span>No data today</span></div>';
+      return;
+    }
+
+    var map={};
+    te.forEach(function(e){
+      var t=e.therapist||"Unknown";
+      map[t]=(map[t]||0)+1;
+    });
+
+    var html="";
+    Object.keys(map).sort().forEach(function(name){
+      html += '<div class="performance-day-row"><span class="performance-day-label">'+escapeHtml(name)+'</span><span class="performance-day-value">'+map[name]+'</span></div>';
+    });
+    list.innerHTML=html;
+  }
+
+  function setPerformanceView(type){
+    currentPerformanceView=type;
+    if(type==="daily") refreshTherapistDaily();
+    else refreshTherapistWeekly();
+  }
+
+  function refreshSidebarPerformance(){
+    if(!currentWeekStart || !currentWeekEnd) return;
+
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,currentWeekStart,currentWeekEnd); });
+    setText("clientCount", we.length);
+
+    var dm={};
+    we.forEach(function(e){ dm[e.date]=(dm[e.date]||0)+1; });
+
+    var daily=document.getElementById("clientDailyList");
+    if(!daily) return;
+
+    if(!we.length){
+      daily.innerHTML='<div class="performance-day-row"><span>No entries yet</span></div>';
+      setPerformanceView(currentPerformanceView);
+      return;
+    }
+
+    var html="";
+    for(var i=0;i<7;i++){
+      var d=new Date(currentWeekStart);
+      d.setDate(currentWeekStart.getDate()+i);
+      var ymd=dateToYMD(d);
+      var cnt=dm[ymd]||0;
+      if(cnt>0){
+        var lbl=d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+        html += '<div class="performance-day-row"><span class="performance-day-label">'+lbl+'</span><span class="performance-day-value">'+cnt+'</span></div>';
+      }
+    }
+    daily.innerHTML=html || '<div class="performance-day-row"><span class="performance-day-label">No entries yet</span></div>';
+    setPerformanceView(currentPerformanceView);
+  }
+
+  function refreshHomeSection(){
+  if(!currentWeekStart || !currentWeekEnd) return;
+
+  var today = dateToYMD(new Date());
+
+  var weekEntries = DB.entries.filter(function(e){
+    return isInWeek(e.date, currentWeekStart, currentWeekEnd);
+  });
+
+  var todayEntries = weekEntries.filter(function(e){
+    return e.date === today;
+  });
+
+  var weekExpenses = DB.expenses.filter(function(e){
+    return isInWeek(e.date, currentWeekStart, currentWeekEnd);
+  });
+
+  var gross = weekEntries.reduce(function(sum, e){
+    return sum + parseMoney(e.total);
+  }, 0);
+
+  var salary = weekEntries.reduce(function(sum, e){
+    return sum + parseMoney(e.therapistShare);
+  }, 0);
+
+  var expenses = weekExpenses.reduce(function(sum, e){
+    return sum + parseMoney(e.amount);
+  }, 0);
+
+  var weeklyNet = gross - salary - expenses;
+
+  setText("clientCount", weekEntries.length);
+  setText("homeTodayClients", todayEntries.length);
+  setText("homeWeeklyGross", formatPeso(gross));
+  setText("homeWeeklyNet", formatPeso(weeklyNet));
+  setText("homeBranchName", CURRENT_BRANCH);
+
+  refreshSidebarPerformance();
+}
+
+  /* ============================================================
+     DEDUCTIONS
+  ============================================================ */
+  function getDeductionRuleAmount(name,type){
+    var row=(DB.settings && DB.settings.deductions || []).find(function(r){
+      return String(r.name||"").toLowerCase()===String(name||"").toLowerCase();
+    });
+    if(!row) return 0;
+    return type==="company" ? Number(row.companyShare)||0 : Number(row.therapistShare)||0;
+  }
+
+  function getSalaryAdjustmentRecord(therapist,weekKey){
+    DB.salaryAdjustments=DB.salaryAdjustments||[];
+    var found=DB.salaryAdjustments.find(function(r){
+      return r.therapist===therapist && r.weekStart===weekKey;
+    });
+
+    if(!found){
+      found={therapist:therapist,weekStart:weekKey,sss:false,pagibig:false,philhealth:false,tardinessMinutes:0,miscellaneous:0,bonds:0};
+      DB.salaryAdjustments.push(found);
+    }
+    return found;
+  }
+
+  function saveSalaryCheckbox(therapist,field,checked){
+    therapist = decodeURIComponent(String(therapist || ""));
+    var rec=getSalaryAdjustmentRecord(therapist,dateToYMD(salaryWeekStart));
+    rec[field]=!!checked;
+    saveSalaryAdjToFirebase(rec);
+    refreshSalarySection();
+    refreshSummarySection();
+    refreshExpensesSection();
+  }
+
+  function saveSalaryNumberInput(therapist,field,value){
+    therapist = decodeURIComponent(String(therapist || ""));
+    var rec=getSalaryAdjustmentRecord(therapist,dateToYMD(salaryWeekStart));
+    rec[field]=Number(value)||0;
+    saveSalaryAdjToFirebase(rec);
+    refreshSalarySection();
+    refreshSummarySection();
+    refreshExpensesSection();
+  }
+
+  function renderSalaryDeductionTable(){
+  var tbody = document.getElementById("salaryDeductionBody");
+  if(!tbody || !salaryWeekStart || !DB.settings) return;
+
+  var names = (DB.settings.therapists || [])
+    .map(function(t){ return t.name; })
+    .filter(Boolean)
+    .sort();
+
+  if(!names.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="color:#9ca3af;font-style:italic;">No therapists available.</td></tr>';
+    return;
+  }
+
+  var weekKey = dateToYMD(salaryWeekStart);
+  tbody.innerHTML = "";
+
+  names.forEach(function(name){
+    var rec = getSalaryAdjustmentRecord(name, weekKey);
+    var safe = encodeURIComponent(name);
+
+    var tr = document.createElement("tr");
+
+    tr.innerHTML =
+      "<td style='text-align:left;font-weight:700;'>"+escapeHtml(name)+"</td>" +
+
+      "<td><input type='checkbox' "+(rec.sss?"checked":"")+
+      " onchange=\"saveSalaryCheckbox('"+safe+"','sss',this.checked)\"></td>" +
+
+      "<td><input type='checkbox' "+(rec.pagibig?"checked":"")+
+      " onchange=\"saveSalaryCheckbox('"+safe+"','pagibig',this.checked)\"></td>" +
+
+      "<td><input type='checkbox' "+(rec.philhealth?"checked":"")+
+      " onchange=\"saveSalaryCheckbox('"+safe+"','philhealth',this.checked)\"></td>" +
+
+       "<td><input type='number' min='0' value='"+(((Number(rec.tardinessMinutes)||0) === 0) ? "" : rec.tardinessMinutes)+"' onchange=\"saveSalaryNumberInput('"+safe+"','tardinessMinutes',this.value)\" style='width:90px;padding:8px 10px;border:1px solid #dbe2ea;border-radius:10px;font-size:13px;'></td>" +
+      "<td><input type='number' min='0' step='0.01' value='"+(((Number(rec.miscellaneous)||0) === 0) ? "" : rec.miscellaneous)+"' onchange=\"saveSalaryNumberInput('"+safe+"','miscellaneous',this.value)\" style='width:110px;padding:8px 10px;border:1px solid #dbe2ea;border-radius:10px;font-size:13px;'></td>" +
+      "<td><input type='number' min='0' step='0.01' value='"+(((Number(rec.bonds)||0) === 0) ? "" : rec.bonds)+"' onchange=\"saveSalaryNumberInput('"+safe+"','bonds',this.value)\" style='width:110px;padding:8px 10px;border:1px solid #dbe2ea;border-radius:10px;font-size:13px;'></td>";
+
+    tbody.appendChild(tr);
+  });
+}
+
+  /* ============================================================
+     SUMMARY SECTION
+  ============================================================ */
+  function refreshSummarySection(){
+    if(!summaryWeekStart || !summaryWeekEnd) return;
+
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,summaryWeekStart,summaryWeekEnd); });
+    var wx=DB.expenses.filter(function(e){ return isInWeek(e.date,summaryWeekStart,summaryWeekEnd); });
+
+    var gross=we.reduce(function(s,e){ return s+parseMoney(e.total); },0);
+    var sal  =we.reduce(function(s,e){ return s+parseMoney(e.therapistShare); },0);
+    var exp  =wx.reduce(function(s,e){ return s+parseMoney(e.amount); },0);
+
+    setText("summaryGross", "\u20B1"+formatMoney(gross));
+    setText("summaryExpenses", "\u20B1"+formatMoney(exp));
+    setText("summarySalary", "\u20B1"+formatMoney(sal));
+    setText("summaryNet", "\u20B1"+formatMoney(gross-sal-exp));
+
+    var dailyTbody=document.getElementById("summaryDailyBody");
+    if(dailyTbody){
+      var dem={}, dxm={};
+
+      we.forEach(function(e){
+        if(!dem[e.date]) dem[e.date]={gross:0,salary:0};
+        dem[e.date].gross += parseMoney(e.total);
+        dem[e.date].salary += parseMoney(e.therapistShare);
+      });
+
+      wx.forEach(function(e){
+        dxm[e.date] = (dxm[e.date] || 0) + parseMoney(e.amount);
+      });
+
+      var allDates=[];
+      for(var i=0;i<7;i++){
+        var dd=new Date(summaryWeekStart);
+        dd.setDate(summaryWeekStart.getDate()+i);
+        allDates.push(dateToYMD(dd));
+      }
+
+      var hasData=allDates.some(function(ymd){ return dem[ymd] || dxm[ymd]; });
+
+      if(!hasData){
+        dailyTbody.innerHTML='<tr><td colspan="5" style="color:#9ca3af;font-style:italic;">No data for this week.</td></tr>';
+      } else {
+        dailyTbody.innerHTML="";
+        allDates.forEach(function(ymd){
+          var de=dem[ymd]||{gross:0,salary:0};
+          var dx=dxm[ymd]||0;
+          var dg=de.gross;
+          var ds=de.salary;
+          var dn=dg-ds-dx;
+
+          var p=ymd.split("-");
+          var lbl=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
+          var tr=document.createElement("tr");
+          if(!(dg>0 || dx>0)) tr.style.opacity="0.45";
+
+          tr.innerHTML =
+            "<td style='text-align:left;font-weight:700;color:#132e4f;'>"+lbl+"</td>" +
+            '<td class="money-cell"><span class="money-value">'+formatPeso(dg)+'</span></td>' +
+            '<td class="money-cell"><span class="money-value">'+formatPeso(dx)+'</span></td>' +
+            '<td class="money-cell"><span class="money-value">'+formatPeso(ds)+'</span></td>' +
+            '<td class="money-cell"><span class="money-value" style="font-weight:800;color:'+(dn<0?'#ef4444':'#10b981')+';">'+formatPeso(dn)+'</span></td>';
+
+          dailyTbody.appendChild(tr);
+        });
+      }
+    }
+
+    var paymentTbody=document.getElementById("summaryPaymentBody");
+    if(paymentTbody){
+      var payMap={};
+
+      we.forEach(function(e){
+        if(!payMap[e.date]) payMap[e.date]={cash:0,gcash:0};
+        var mode=String(e.payment||"").toLowerCase();
+
+        if(mode==="cash") payMap[e.date].cash += parseMoney(e.total);
+        else if(mode==="gcash") payMap[e.date].gcash += parseMoney(e.total);
+        else if(mode==="split"){
+          payMap[e.date].cash += parseMoney(e.cashAmount);
+          payMap[e.date].gcash += parseMoney(e.gcashAmount);
+        }
+      });
+
+      var payDates=[];
+      for(var j=0;j<7;j++){
+        var pd=new Date(summaryWeekStart);
+        pd.setDate(summaryWeekStart.getDate()+j);
+        payDates.push(dateToYMD(pd));
+      }
+
+      var hasPay=payDates.some(function(ymd){
+        var r=payMap[ymd];
+        return r && (r.cash>0 || r.gcash>0);
+      });
+
+      if(!hasPay){
+        paymentTbody.innerHTML='<tr><td colspan="3" style="color:#9ca3af;font-style:italic;">No payment data for this week.</td></tr>';
+      } else {
+        paymentTbody.innerHTML="";
+        payDates.forEach(function(ymd){
+          var r=payMap[ymd] || {cash:0,gcash:0};
+          var p=ymd.split("-");
+          var lbl=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+
+          var tr=document.createElement("tr");
+          if(!(r.cash>0 || r.gcash>0)) tr.style.opacity="0.45";
+          tr.innerHTML =
+            "<td style='text-align:left;font-weight:700;color:#132e4f;'>"+lbl+"</td>" +
+            '<td class="money-cell"><span class="money-value">'+formatPeso(r.cash)+'</span></td>' +
+            '<td class="money-cell"><span class="money-value">'+formatPeso(r.gcash)+'</span></td>';
+
+          paymentTbody.appendChild(tr);
+        });
+      }
+    }
+
+    var tMap={};
+    var swk=(summaryWeekStart) ? dateToYMD(summaryWeekStart) : "";
+
+    we.forEach(function(e){
+      var t=e.therapist || "Unknown";
+      if(!tMap[t]) tMap[t]={gross:0};
+      tMap[t].gross += parseMoney(e.therapistShare);
+    });
+
+    var tbody=document.getElementById("summaryTherapistBody");
+    if(!tbody) return;
+
+    var names=Object.keys(tMap).sort();
+    if(!names.length){
+      tbody.innerHTML='<tr><td colspan="9" style="color:#9ca3af;font-style:italic;">No data for this week.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML="";
+    names.forEach(function(name){
+      var d=tMap[name];
+      var rec=getSalaryAdjustmentRecord(name,swk);
+
+      var sss=rec.sss ? getDeductionRuleAmount("SSS","therapist") : 0;
+      var pagibig=rec.pagibig ? getDeductionRuleAmount("Pag-IBIG","therapist") : 0;
+      var philhealth=rec.philhealth ? getDeductionRuleAmount("PhilHealth","therapist") : 0;
+      var tRate=getDeductionRuleAmount("Tardiness Per Minute","therapist");
+      var tardiness=(Number(rec.tardinessMinutes)||0)*tRate;
+      var misc=Number(rec.miscellaneous)||0;
+var bonds=Number(rec.bonds)||0;
+var net=d.gross-sss-pagibig-philhealth-tardiness-misc-bonds;
+      if(net<0) net=0;
+
+      var tr=document.createElement("tr");
+tr.innerHTML =
+  "<td style='text-align:left;font-weight:700;'>"+escapeHtml(name)+"</td>" +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(d.gross)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(sss)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(pagibig)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(philhealth)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(tardiness)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(misc)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value">'+formatPeso(bonds)+'</span></td>' +
+  '<td class="money-cell"><span class="money-value" style="font-weight:700;color:#10b981;">'+formatPeso(net)+'</span></td>';
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ============================================================
+     PAYROLL PDF
+  ============================================================ */
+  function downloadPayrollPDF() {
+  if (!summaryWeekStart || !summaryWeekEnd) {
+    alert("Summary week is not ready.");
+    return;
+  }
+
+  var tbody = document.getElementById("summaryTherapistBody");
+  if (!tbody) {
+    alert("Table not found.");
+    return;
+  }
+
+  var rows = [];
+  Array.from(tbody.querySelectorAll("tr")).forEach(function(tr) {
+    var tds = tr.querySelectorAll("td");
+    if (tds.length === 9) {
+      rows.push({
+        therapist: tds[0].innerText,
+        gross: tds[1].innerText,
+        sss: tds[2].innerText,
+        pagibig: tds[3].innerText,
+        philhealth: tds[4].innerText,
+        tardiness: tds[5].innerText,
+        miscellaneous: tds[6].innerText,
+        bonds: tds[7].innerText,
+        netSalary: tds[8].innerText
+      });
+    }
+  });
+
+  if (!rows.length) {
+    alert("No data.");
+    return;
+  }
+
+  var branchName = CURRENT_BRANCH || ((document.getElementById("homeBranchName") || {}).innerText) || "Branch";
+  var container = document.createElement("div");
+  container.style.cssText = "padding:15px;font-family:Arial;background:#fff;";
+  container.innerHTML =
+    '<div style="margin-bottom:10px;">' +
+      '<div style="font-size:18px;font-weight:bold;">PAYROLL</div>' +
+      '<div style="font-size:12px;font-weight:bold;">' + branchName + '</div>' +
+      '<div style="font-size:12px;">Week: ' + dateToYMD(summaryWeekStart) + ' - ' + dateToYMD(summaryWeekEnd) + '</div>' +
+    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #000;">' +
+    '<thead><tr>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:13%;">THERAPIST</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:10%;">GROSS</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:8%;">SSS</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:9%;">PAG-IBIG</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:10%;">PHILHEALTH</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:10%;">TARDINESS</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:11%;">MISC</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:9%;">BONDS</th>' +
+      '<th style="border:1px solid #000;padding:5px;font-size:10px;width:10%;">NET</th>' +
+    '</tr></thead><tbody>' +
+    rows.map(function(r){
+      return '<tr>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;">' + r.therapist + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.gross + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.sss + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.pagibig + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.philhealth + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.tardiness + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.miscellaneous + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;">' + r.bonds + '</td>' +
+        '<td style="border:1px solid #000;padding:5px;font-size:10px;text-align:right;font-weight:bold;">' + r.netSalary + '</td>' +
+      '</tr>';
+    }).join("") +
+    '</tbody></table>' +
+    '<div style="margin-top:40px;display:flex;justify-content:space-between;">' +
+      '<div style="text-align:center;width:30%;"><div style="border-top:1px solid #000;height:20px;"></div>Prepared by</div>' +
+      '<div style="text-align:center;width:30%;"><div style="border-top:1px solid #000;height:20px;"></div>Approved by</div>' +
+      '<div style="text-align:center;width:30%;"><div style="border-top:1px solid #000;height:20px;"></div>Received by</div>' +
+    '</div>';
+
+  document.body.appendChild(container);
+
+  var opt = {
+    margin: 4,
+    filename: "Payroll.pdf",
+    image: { type: "jpeg", quality: 1 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "a4", orientation: "landscape" }
+  };
+
+  html2pdf().set(opt).from(container).save().then(function(){
+    document.body.removeChild(container);
+  });
+}
+
+  /* ============================================================
+     SALARY SECTION
+  ============================================================ */
+  function refreshSalarySection(){
+    var thead=document.getElementById("therapistTableHead");
+    var tbody=document.getElementById("therapistTableBody");
+    if(!thead || !tbody || !salaryWeekStart || !salaryWeekEnd) return;
+
+    var weekDates=[];
+    for(var i=0;i<7;i++){
+      var d=new Date(salaryWeekStart);
+      d.setDate(salaryWeekStart.getDate()+i);
+      d.setHours(0,0,0,0);
+      weekDates.push(d);
+    }
+
+    var labels=weekDates.map(function(d){
+      return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    });
+
+    thead.innerHTML="<tr><th>Therapist</th>"+labels.map(function(l){ return "<th>"+l+"</th>"; }).join("")+"<th>Total Salary</th></tr>";
+
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,salaryWeekStart,salaryWeekEnd); });
+    var tMap={};
+
+    we.forEach(function(entry){
+      var t=entry.therapist || "Unknown";
+      if(!tMap[t]) tMap[t]=[0,0,0,0,0,0,0];
+      for(var j=0;j<weekDates.length;j++){
+        if(entry.date===dateToYMD(weekDates[j])){
+          tMap[t][j] += parseMoney(entry.therapistShare);
+          break;
+        }
+      }
+    });
+
+    tbody.innerHTML="";
+    var names=Object.keys(tMap).sort();
+
+    if(!names.length){
+      tbody.innerHTML='<tr><td colspan="9" style="color:#9ca3af;font-style:italic;">No data for this week.</td></tr>';
+    } else {
+      names.forEach(function(name){
+        var daily=tMap[name];
+        var total=daily.reduce(function(s,v){ return s+v; },0);
+        var tr=document.createElement("tr");
+        tr.innerHTML =
+          "<td>"+escapeHtml(name)+"</td>" +
+          daily.map(function(v){
+            return '<td class="money-cell"><span class="money-value">'+formatPeso(v)+'</span></td>';
+          }).join("") +
+          '<td class="money-cell" style="font-weight:700;"><span class="money-value">'+formatPeso(total)+'</span></td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderSalaryDeductionTable();
+renderBondsTable();
+  }
+
+  /* ============================================================
+     EXPENSES SECTION
+  ============================================================ */
+  function refreshExpensesSection(){
+    var tbody=document.getElementById("expensesTableBody");
+    if(!tbody || !expensesWeekStart || !expensesWeekEnd) return;
+
+    var wx=DB.expenses.filter(function(e){ return isInWeek(e.date,expensesWeekStart,expensesWeekEnd); });
+
+    if(!wx.length){
+      tbody.innerHTML='<tr><td colspan="4" style="color:#9ca3af;font-style:italic;">No expenses for this week.</td></tr>';
+      refreshPayablesReminder();
+      return;
+    }
+
+    tbody.innerHTML="";
+    wx.slice().sort(function(a,b){ return (b.date || "").localeCompare(a.date || ""); }).forEach(function(exp){
+      var tr=document.createElement("tr");
+      tr.dataset.id=exp.id;
+      tr.innerHTML =
+        "<td>"+escapeHtml(formatDateDisplay(exp.date))+"</td>" +
+        "<td style='text-align:left;'>"+escapeHtml(exp.particulars)+"</td>" +
+        '<td class="money-cell"><span class="money-value">'+formatPeso(exp.amount)+'</span></td>' +
+        '<td>' +
+          '<button class="icon-btn edit-btn" onclick="editExpense(\''+exp.id+'\')" title="Edit"><i class="fas fa-edit"></i></button>' +
+          '<button class="icon-btn delete-btn-icon" onclick="deleteExpense(\''+exp.id+'\')" title="Delete"><i class="fas fa-trash"></i></button>' +
+        '</td>';
+      tbody.appendChild(tr);
+    });
+
+    refreshPayablesReminder();
+  }
+
+  function refreshPayablesReminder(){
+    var box=document.getElementById("payablesReminderBox");
+    var totalEl=document.getElementById("companyContributionTotal");
+    var namesEl=document.getElementById("companyContributionNames");
+    if(!box || !totalEl || !namesEl || !salaryWeekStart) return;
+
+    var weekKey=dateToYMD(salaryWeekStart);
+    var we=DB.entries.filter(function(e){ return isInWeek(e.date,salaryWeekStart,salaryWeekEnd); });
+
+    var activeT={};
+    we.forEach(function(e){ if(e.therapist) activeT[e.therapist]=true; });
+
+    var total=0, names=[];
+    Object.keys(activeT).sort().forEach(function(name){
+      var rec=getSalaryAdjustmentRecord(name,weekKey);
+      var ct=0;
+      if(rec.sss) ct += getDeductionRuleAmount("SSS","company");
+      if(rec.pagibig) ct += getDeductionRuleAmount("Pag-IBIG","company");
+      if(rec.philhealth) ct += getDeductionRuleAmount("PhilHealth","company");
+
+      if(ct>0){
+        total += ct;
+        names.push(name);
+      }
+    });
+
+    totalEl.innerText=formatPeso(total);
+    namesEl.innerText=names.length ? names.join(", ") : "None";
+    box.style.display=(total>0 && !payablesPaid[payablesDocId]) ? "block" : "none";
+    
+    // Auto-create expense for payables if total > 0
+    if(total > 0) {
+      createPayableExpense(total, weekKey);
+    }
+  }
+
+  function createPayableExpense(amount, weekKey){
+    // Check if a contribution expense already exists for this week to avoid duplicates
+    var existingPayable = DB.expenses.find(function(e){
+      return e.particulars === "Contribution" && e.id === ("payable_" + CURRENT_BRANCH.replace(/\s+/g, "_") + "_" + weekKey);
+    });
+
+    if(existingPayable) return; // Don't create duplicate
+
+    // Create expense entry for the payable
+    var expenseDate = new Date(salaryWeekStart);
+    var expenseEntry = {
+      id: "payable_" + CURRENT_BRANCH.replace(/\s+/g, "_") + "_" + weekKey,
+      date: formatDateInput(expenseDate),
+      particulars: "Contribution",
+      amount: Number(amount),
+      branch: CURRENT_BRANCH,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      window.db.collection("expenses").doc(expenseEntry.id).set(expenseEntry, { merge: true });
+    } catch(e){
+      console.error("Error creating payable expense:", e);
+    }
+  }
+
+  async function markPayablesPaid(){
+    var weekKey = dateToYMD(salaryWeekStart);
+    var payablesDocId = CURRENT_BRANCH.replace(/\s+/g, "_") + "__" + weekKey;
+    var payablesDocId = CURRENT_BRANCH.replace(/\s+/g, "_") + "__" + weekKey;
+    var we = DB.entries.filter(function(e){ return isInWeek(e.date,salaryWeekStart,salaryWeekEnd); });
+    var activeT = {};
+    we.forEach(function(e){ if(e.therapist) activeT[e.therapist]=true; });
+
+    // Disable deductions for therapists with payables
+    var savePromises = [];
+    Object.keys(activeT).sort().forEach(function(name){
+      var rec = getSalaryAdjustmentRecord(name, weekKey);
+      if(rec.sss || rec.pagibig || rec.philhealth){
+        rec.sss = false;
+        rec.pagibig = false;
+        rec.philhealth = false;
+        savePromises.push(saveSalaryAdjToFirebase(rec));
+      }
+    });
+
+    // Wait for all saves to complete
+    await Promise.all(savePromises);
+
+    refreshSummarySection();
+    refreshExpensesSection();
+
+    try {
+      window.db.collection("payablesPaid").doc(payablesDocId).set({
+        branch: CURRENT_BRANCH,
+        paidAt: new Date().toISOString()
+      });
+      showSyncStatus("Payables marked as paid ✓", "ok");
+    } catch(e){
+      console.error("Error marking payables paid:", e);
+      showSyncStatus("Failed to mark as paid", "err");
+    }
+  }
+
+  function formatDateInput(date){
+    return date.getFullYear() + "-" + 
+           String(date.getMonth() + 1).padStart(2, '0') + "-" + 
+           String(date.getDate()).padStart(2, '0');
+  }
+
+  /* ============================================================
+     ENTRY CRUD
+  ============================================================ */
+  async function deleteEntry(id){
+    showConfirm("Delete this entry?", async function(ok){
+      if(!ok) return;
+      await deleteEntryFromFirebase(id);
+      showSyncStatus("Entry deleted ✓","ok");
+    });
+  }
+
+  function editEntry(id){
+    var entry=DB.entries.find(function(e){ return e.id===id; });
+    if(!entry || !DB.settings) return;
+
+    editingEntryId=id;
+
+    populateTherapistDropdown();
+    renderDiscountSuggestions();
+
+    document.getElementById("entryDate").value   = entry.date;
+    document.getElementById("timeSlot").value    = entry.timeSlot;
+    document.getElementById("clientName").value  = entry.client;
+    document.getElementById("therapist").value   = entry.therapist;
+    document.getElementById("wellness").value    = entry.wellness;
+    document.getElementById("payment").value     = entry.payment;
+    document.getElementById("discount").value    = entry.discount;
+
+    var splitCashEl=document.getElementById("splitCashAmount");
+    var splitGcashEl=document.getElementById("splitGcashAmount");
+    if(splitCashEl) splitCashEl.value = entry.cashAmount ? formatMoney(entry.cashAmount) : "";
+    if(splitGcashEl) splitGcashEl.value = entry.gcashAmount ? formatMoney(entry.gcashAmount) : "";
+
+    toggleSplitPaymentFields();
+
+    selectedServices      = DB.settings.services.filter(function(s){ return (entry.services||[]).indexOf(s.name)!==-1; });
+    selectedAddons        = DB.settings.addons.filter(function(s){ return (entry.addons||[]).indexOf(s.name)!==-1; });
+    selectedOtherServices = DB.settings.otherServices.filter(function(s){ return (entry.otherServices||[]).indexOf(s.name)!==-1; });
+
+    var wv=entry.wellness.trim().toLowerCase();
+    var tv=entry.timeSlot.trim().toLowerCase();
+
+    function matchItem(item){
+      var c=(item.category||"").trim().toLowerCase();
+      var sl=(item.timeSlot||"").trim().toLowerCase();
+      return c===wv && (!tv || !sl || sl===tv);
+    }
+
+    renderMultiOptions("servicesOptions", DB.settings.services.filter(matchItem), selectedServices, "service");
+    renderMultiOptions("addonsOptions", DB.settings.addons.filter(matchItem), selectedAddons, "addon");
+    renderMultiOptions("otherServicesOptions", DB.settings.otherServices.filter(matchItem), selectedOtherServices, "other");
+
+    renderMultiTags("servicesTags", selectedServices, "Select Service");
+    renderMultiTags("addonsTags", selectedAddons, "Select Add-On");
+    renderMultiTags("otherServicesTags", selectedOtherServices, "Select Other Services");
+
+    computeEntryAmounts();
+
+    setText("entryModalTitle","Edit Entry");
+    setText("entryModalSubtitle","Update this sales entry");
+    document.getElementById("entryModal").style.display="flex";
+  }
+
+  /* ============================================================
+     EXPENSE CRUD
+  ============================================================ */
+  async function deleteExpense(id){
+    showConfirm("Delete this expense?", async function(ok){
+      if(!ok) return;
+      await deleteExpenseFromFirebase(id);
+      showSyncStatus("Expense deleted ✓","ok");
+    });
+  }
+
+  function editExpense(id){
+    var exp=DB.expenses.find(function(e){ return e.id===id; });
+    if(!exp) return;
+
+    editingExpenseId=id;
+    setText("expenseModalTitle","Edit Expense");
+    setText("expenseModalSubtitle","Update this expense entry");
+
+    document.getElementById("expenseDate").value = exp.date;
+    document.getElementById("expenseAmount").value = exp.amount ? formatMoney(exp.amount) : "";
+
+    var predefined=["Utilities","Supplies","Rent","Salary Adjustment","Transportation","Maintenance","Marketing"];
+    var sel=document.getElementById("expenseParticularsSelect");
+    var oth=document.getElementById("expenseOtherParticulars");
+
+    if(predefined.indexOf(exp.particulars)!==-1){
+      sel.value=exp.particulars;
+      oth.value="";
+      document.getElementById("expenseOtherWrap").style.display="none";
+    } else {
+      sel.value="Other";
+      oth.value=exp.particulars;
+      document.getElementById("expenseOtherWrap").style.display="flex";
+    }
+
+    document.getElementById("expenseModal").style.display="flex";
+  }
+
+  /* ============================================================
+     SETTINGS
+  ============================================================ */
+  function renderSettingsTables(){
+    if(!DB.settings) return;
+
+    renderSettingsTable("servicesTableBody", DB.settings.services, "service");
+    renderSettingsTable("addonsTableBody", DB.settings.addons, "addon");
+    renderSettingsTable("otherServicesTableBody", DB.settings.otherServices, "other");
+    renderTherapistTable();
+    renderShareTable();
+    renderDiscountTable();
+    renderDeductionTable();
+    attachPriceFormatters();
+  }
+
+  function renderSettingsTable(tbodyId,data,type){
+    var tbody=document.getElementById(tbodyId);
+    if(!tbody) return;
+    tbody.innerHTML="";
+
+    data.forEach(function(item,idx){
+      var tr=document.createElement("tr");
+      tr.innerHTML =
+        '<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',0,this)">'+escapeHtml(item.name)+'</td>' +
+        '<td contenteditable="true" class="price-cell" onblur="saveSettingsRow(\''+type+'\','+idx+',1,this)">\u20B1'+escapeHtml(formatMoney(item.price))+'</td>' +
+        '<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',2,this)">'+escapeHtml(item.timeSlot)+'</td>' +
+        '<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',3,this)">'+escapeHtml(item.category)+'</td>' +
+        '<td><button type="button" class="delete-btn" onclick="deleteSettingsRow(\''+type+'\','+idx+')">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderTherapistTable(){
+    var tbody=document.getElementById("therapistSettingsBody");
+    if(!tbody) return;
+    tbody.innerHTML="";
+
+    DB.settings.therapists.forEach(function(item,idx){
+      var tr=document.createElement("tr");
+      tr.innerHTML =
+        '<td contenteditable="true" onblur="saveTherapistRow('+idx+',this)">'+escapeHtml(item.name)+'</td>' +
+        '<td><button type="button" class="delete-btn" onclick="deleteTherapistRow('+idx+')">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderShareTable(){
+    var tbody=document.getElementById("shareTableBody");
+    if(!tbody) return;
+    tbody.innerHTML="";
+
+    (DB.settings.share||[]).forEach(function(item,idx){
+      var tr=document.createElement("tr");
+      tr.innerHTML =
+        '<td contenteditable="true" onblur="saveShareRow('+idx+',0,this)">'+escapeHtml(item.type)+'</td>' +
+        '<td contenteditable="true" onblur="saveShareRow('+idx+',1,this)">'+escapeHtml(String(item.rate||0))+'</td>' +
+        '<td><button class="delete-btn" onclick="deleteShareRow('+idx+')">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderDiscountTable(){
+    var tbody=document.getElementById("discountTableBody");
+    if(!tbody) return;
+    tbody.innerHTML="";
+
+    (DB.settings.discount||[]).forEach(function(item,idx){
+      var tr=document.createElement("tr");
+      tr.innerHTML =
+        '<td contenteditable="true" onblur="saveDiscountRow('+idx+',0,this)">'+escapeHtml(item.type)+'</td>' +
+        '<td contenteditable="true" onblur="saveDiscountRow('+idx+',1,this)">'+escapeHtml(String(item.value||0))+'</td>' +
+        '<td contenteditable="true" onblur="saveDiscountRow('+idx+',2,this)">'+escapeHtml(item.mode||"fixed")+'</td>' +
+        '<td><button class="delete-btn" onclick="deleteDiscountRow('+idx+')">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderDeductionTable(){
+    var tbody=document.getElementById("deductionTableBody");
+    if(!tbody) return;
+    tbody.innerHTML="";
+
+    (DB.settings.deductions||[]).forEach(function(item,idx){
+      var tr=document.createElement("tr");
+      tr.innerHTML =
+        '<td contenteditable="true" onblur="saveDeductionRow('+idx+',0,this)">'+escapeHtml(item.name)+'</td>' +
+        '<td contenteditable="true" onblur="saveDeductionRow('+idx+',1,this)">'+escapeHtml(String(item.therapistShare||0))+'</td>' +
+        '<td contenteditable="true" onblur="saveDeductionRow('+idx+',2,this)">'+escapeHtml(String(item.companyShare||0))+'</td>' +
+        '<td><button class="delete-btn" onclick="deleteDeductionRow('+idx+')">Delete</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderDiscountSuggestions(){
+    if(!DB.settings) return;
+    var select=document.getElementById("discount");
+    if(!select) return;
+
+    var cur=select.value||"";
+    select.innerHTML='<option value="">Select Discount</option>';
+
+    (DB.settings.discount||[]).forEach(function(item){
+      if(!item.type) return;
+      var opt=document.createElement("option");
+      opt.value=item.type;
+      opt.textContent=item.type;
+      select.appendChild(opt);
+    });
+
+    if((DB.settings.discount||[]).some(function(item){ return item.type===cur; })) select.value=cur;
+  }
+
+  function saveSettingsRow(type,idx,col,el){
+    var arr = type==="service" ? DB.settings.services : type==="addon" ? DB.settings.addons : DB.settings.otherServices;
+    if(!arr[idx]) return;
+
+    var val=el.innerText.trim();
+    if(col===0) arr[idx].name=val;
+    if(col===1){
+      arr[idx].price=String(parseMoney(val));
+      el.innerText="\u20B1"+formatMoney(parseMoney(val));
+    }
+    if(col===2) arr[idx].timeSlot=val;
+    if(col===3) arr[idx].category=val;
+
+    saveSettingsToFirebase();
+  }
+
+  function saveTherapistRow(idx,el){
+    if(DB.settings.therapists[idx]){
+      DB.settings.therapists[idx].name=el.innerText.trim();
+      saveSettingsToFirebase();
+    }
+  }
+
+  function saveShareRow(idx,col,el){
+    if(!DB.settings.share[idx]) return;
+    var val=el.innerText.trim();
+
+    if(col===0) DB.settings.share[idx].type=val;
+    if(col===1){
+      DB.settings.share[idx].rate=Number(val)||0;
+      el.innerText=String(DB.settings.share[idx].rate);
+    }
+
+    saveSettingsToFirebase();
+  }
+
+  function saveDiscountRow(idx,col,el){
+    if(!DB.settings.discount[idx]) return;
+    var val=el.innerText.trim();
+
+    if(col===0) DB.settings.discount[idx].type=val;
+    if(col===1) DB.settings.discount[idx].value=Number(val)||0;
+    if(col===2){
+      val=val.toLowerCase();
+      DB.settings.discount[idx].mode=(val==="percent")?"percent":"fixed";
+      el.innerText=DB.settings.discount[idx].mode;
+    }
+
+    saveSettingsToFirebase();
+    renderDiscountSuggestions();
+  }
+
+  function saveDeductionRow(idx,col,el){
+    DB.settings.deductions=DB.settings.deductions||[];
+    if(!DB.settings.deductions[idx]) return;
+
+    var val=el.innerText.trim();
+    if(col===0) DB.settings.deductions[idx].name=val;
+    if(col===1) DB.settings.deductions[idx].therapistShare=Number(val)||0;
+    if(col===2) DB.settings.deductions[idx].companyShare=Number(val)||0;
+
+    saveSettingsToFirebase();
+    refreshSummarySection();
+    refreshExpensesSection();
+  }
+
+  function deleteSettingsRow(type,idx){
+    var arr = type==="service" ? DB.settings.services : type==="addon" ? DB.settings.addons : DB.settings.otherServices;
+    arr.splice(idx,1);
+    renderSettingsTables();
+    saveSettingsToFirebase();
+  }
+  function deleteTherapistRow(idx){ DB.settings.therapists.splice(idx,1); renderTherapistTable(); saveSettingsToFirebase(); }
+  function deleteShareRow(idx){ DB.settings.share.splice(idx,1); renderShareTable(); saveSettingsToFirebase(); }
+  function deleteDiscountRow(idx){ DB.settings.discount.splice(idx,1); renderDiscountTable(); renderDiscountSuggestions(); saveSettingsToFirebase(); }
+  function deleteDeductionRow(idx){ DB.settings.deductions.splice(idx,1); renderDeductionTable(); saveSettingsToFirebase(); refreshSummarySection(); refreshExpensesSection(); }
+
+  function addServiceRow(){ DB.settings.services.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("servicesTab",document.querySelector(".settings-tab-btn")); saveSettingsToFirebase(); }
+  function addAddonRow(){ DB.settings.addons.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("addonsTab",document.querySelectorAll(".settings-tab-btn")[1]); saveSettingsToFirebase(); }
+  function addOtherServiceRow(){ DB.settings.otherServices.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("otherServicesTab",document.querySelectorAll(".settings-tab-btn")[2]); saveSettingsToFirebase(); }
+  function addTherapistRow(){ DB.settings.therapists.push({name:""}); renderTherapistTable(); saveSettingsToFirebase(); }
+  function addShareRow(){ DB.settings.share=DB.settings.share||[]; DB.settings.share.push({type:"",rate:0}); renderShareTable(); saveSettingsToFirebase(); }
+  function addDiscountRow(){ DB.settings.discount=DB.settings.discount||[]; DB.settings.discount.push({type:"",value:0,mode:"fixed"}); renderDiscountTable(); renderDiscountSuggestions(); saveSettingsToFirebase(); }
+  function addDeductionRow(){ DB.settings.deductions=DB.settings.deductions||[]; DB.settings.deductions.push({name:"",therapistShare:0,companyShare:0}); renderDeductionTable(); saveSettingsToFirebase(); }
+
+  function attachPriceFormatters(){
+    document.querySelectorAll(".price-cell[contenteditable='true']").forEach(function(cell){
+      if(cell.dataset.bound==="true") return;
+      cell.dataset.bound="true";
+      cell.addEventListener("focus", function(){ this.innerText=String(parseMoney(this.innerText)); });
+      cell.addEventListener("blur", function(){ this.innerText="\u20B1"+formatMoney(parseMoney(this.innerText)); });
+      cell.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); this.blur(); } });
+    });
+  }
+
+  /* ============================================================
+     MULTI-SELECT
+  ============================================================ */
+  function toggleMultiSelect(ddId,dpId){
+    document.querySelectorAll(".multi-select-dropdown").forEach(function(d){
+      if(d.id!==ddId) d.classList.remove("open");
+    });
+    document.querySelectorAll(".multi-select-display").forEach(function(d){
+      if(d.id!==dpId) d.classList.remove("active");
+    });
+
+    var dd=document.getElementById(ddId);
+    var dp=document.getElementById(dpId);
+
+    if(dd) dd.classList.toggle("open");
+    if(dp) dp.classList.toggle("active");
+  }
+
+  function closeAllMultiSelects(){
+    document.querySelectorAll(".multi-select-dropdown").forEach(function(d){ d.classList.remove("open"); });
+    document.querySelectorAll(".multi-select-display").forEach(function(d){ d.classList.remove("active"); });
+  }
+
+  function renderMultiTags(cId,items,placeholder){
+    var c=document.getElementById(cId);
+    if(!c) return;
+
+    if(!items.length){
+      c.innerHTML='<span class="multi-placeholder">'+placeholder+'</span>';
+      return;
+    }
+
+    c.innerHTML=items.map(function(i){
+      return '<span class="multi-tag">'+escapeHtml(i.name)+'</span>';
+    }).join("");
+  }
+
+  function renderMultiOptions(cId,items,sel,type){
+    var c=document.getElementById(cId);
+    if(!c) return;
+
+    c.innerHTML="";
+    if(!items.length){
+      c.innerHTML='<div class="multi-option"><div class="multi-option-text"><div class="multi-option-name">No options available</div></div></div>';
+      return;
+    }
+
+    items.forEach(function(item){
+      var checked=sel.some(function(s){ return s.name===item.name; });
+      var label=document.createElement("label");
+      label.className="multi-option";
+      label.innerHTML =
+        '<input type="checkbox"'+(checked?" checked":"")+'>' +
+        '<div class="multi-option-text">' +
+          '<div class="multi-option-name">'+escapeHtml(item.name)+'</div>' +
+          '<div class="multi-option-meta">\u20B1'+formatMoney(item.price)+(item.timeSlot?" • "+item.timeSlot:"")+(item.category?" • "+item.category:"")+'</div>' +
+        '</div>';
+
+      label.querySelector("input").addEventListener("change",function(){
+        handleMultiSelect(type,item,this.checked);
+      });
+
+      c.appendChild(label);
+    });
+  }
+
+  function handleMultiSelect(type,item,isChecked){
+    var list=type==="service" ? selectedServices : type==="addon" ? selectedAddons : selectedOtherServices;
+
+    if(isChecked){
+      if(!list.some(function(x){ return x.name===item.name; })) list.push(item);
+    } else {
+      var i=list.findIndex(function(x){ return x.name===item.name; });
+      if(i>-1) list.splice(i,1);
+    }
+
+    if(type==="service") renderMultiTags("servicesTags", selectedServices, "Select Service");
+    else if(type==="addon") renderMultiTags("addonsTags", selectedAddons, "Select Add-On");
+    else renderMultiTags("otherServicesTags", selectedOtherServices, "Select Other Services");
+
+    computeEntryAmounts();
+  }
+
+  /* ============================================================
+     ENTRY MODAL
+  ============================================================ */
+  function populateTherapistDropdown(){
+    if(!DB.settings) return;
+    var sel=document.getElementById("therapist");
+    if(!sel) return;
+
+    sel.innerHTML='<option value="">Select Therapist</option>';
+    DB.settings.therapists.forEach(function(t){
+      var opt=document.createElement("option");
+      opt.value=t.name;
+      opt.textContent=t.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function populateEntryDropdowns(){
+    if(!DB.settings) return;
+
+    var wv=((document.getElementById("wellness")||{}).value||"").trim().toLowerCase();
+    var tv=((document.getElementById("timeSlot")||{}).value||"").trim().toLowerCase();
+
+    selectedServices=[];
+    selectedAddons=[];
+    selectedOtherServices=[];
+
+    renderMultiTags("servicesTags",[],"Select Service");
+    renderMultiTags("addonsTags",[],"Select Add-On");
+    renderMultiTags("otherServicesTags",[],"Select Other Services");
+
+    if(!wv){
+      renderMultiOptions("servicesOptions",[],[],"service");
+      renderMultiOptions("addonsOptions",[],[],"addon");
+      renderMultiOptions("otherServicesOptions",[],[],"other");
+      computeEntryAmounts();
+      return;
+    }
+
+    function match(item){
+      var c=(item.category||"").trim().toLowerCase();
+      var sl=(item.timeSlot||"").trim().toLowerCase();
+      return c===wv && (!tv || !sl || sl===tv);
+    }
+
+    renderMultiOptions("servicesOptions", DB.settings.services.filter(match), selectedServices, "service");
+    renderMultiOptions("addonsOptions", DB.settings.addons.filter(match), selectedAddons, "addon");
+    renderMultiOptions("otherServicesOptions", DB.settings.otherServices.filter(match), selectedOtherServices, "other");
+
+    computeEntryAmounts();
+  }
+
+  function computeEntryAmounts(){
+    if(!DB.settings) return;
+
+    var pre=[].concat(selectedServices,selectedAddons,selectedOtherServices)
+      .reduce(function(s,i){ return s + parseMoney(i.price); }, 0);
+
+    var category=((document.getElementById("wellness")||{}).value||"");
+    var discountInput=(((document.getElementById("discount")||{}).value||"")).trim();
+
+    var dAmount=0;
+    if(discountInput){
+      var md=(DB.settings.discount||[]).find(function(d){
+        return String(d.type||"").toLowerCase()===discountInput.toLowerCase();
+      });
+
+      if(md){
+        var dv=Number(md.value)||0;
+        var dm=String(md.mode||"fixed").toLowerCase();
+        dAmount = dm==="percent" ? pre*(dv/100) : dv;
+      }
+    }
+
+    if(dAmount>pre) dAmount=pre;
+
+    var total=pre-dAmount;
+    var ms=(DB.settings.share||[]).find(function(s){
+      return String(s.type||"").trim().toLowerCase()===String(category||"").trim().toLowerCase();
+    });
+
+    var rate=ms ? Number(ms.rate)||0 : 0;
+    if(rate>1) rate=rate/100;
+
+    var share=total*rate;
+    var net=total-share;
+
+    var el;
+    el=document.getElementById("totalAmount"); if(el) el.value=formatPeso(total);
+    el=document.getElementById("shareAmount"); if(el) el.value=formatPeso(share);
+    el=document.getElementById("netAmount"); if(el) el.value=formatPeso(net);
+  }
+
+  function toggleSplitPaymentFields(){
+    var paymentEl=document.getElementById("payment");
+    var wrap=document.getElementById("splitPaymentWrap");
+    if(!paymentEl || !wrap) return;
+
+    if(paymentEl.value==="Split"){
+      wrap.style.display="block";
+    } else {
+      wrap.style.display="none";
+      var cashEl=document.getElementById("splitCashAmount"); if(cashEl) cashEl.value="";
+      var gcashEl=document.getElementById("splitGcashAmount"); if(gcashEl) gcashEl.value="";
+    }
+  }
+
+  function getSplitAmounts(){
+    var payment=((document.getElementById("payment")||{}).value||"").trim();
+    var cashAmount=0, gcashAmount=0;
+
+    if(payment==="Cash"){
+      cashAmount=parseMoney((document.getElementById("totalAmount")||{}).value);
+    } else if(payment==="Gcash"){
+      gcashAmount=parseMoney((document.getElementById("totalAmount")||{}).value);
+    } else if(payment==="Split"){
+      cashAmount=parseMoney((document.getElementById("splitCashAmount")||{}).value);
+      gcashAmount=parseMoney((document.getElementById("splitGcashAmount")||{}).value);
+    }
+
+    return { cashAmount: cashAmount, gcashAmount: gcashAmount };
+  }
+
+  function validateSplitPayment(total){
+    var payment=((document.getElementById("payment")||{}).value||"").trim();
+    if(payment!=="Split") return true;
+
+    var cashAmount=parseMoney((document.getElementById("splitCashAmount")||{}).value);
+    var gcashAmount=parseMoney((document.getElementById("splitGcashAmount")||{}).value);
+
+    if(cashAmount<=0 && gcashAmount<=0){
+      alert("Please enter Cash and/or GCash amount for split payment.");
+      return false;
+    }
+
+    var combined=cashAmount+gcashAmount;
+    if(Math.abs(combined-total)>0.009){
+      alert("Split payment mismatch. Cash + GCash must equal Total.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function openEntryModal(){
+    if(!appReady) return;
+
+    editingEntryId=null;
+    clearEntryForm();
+
+    setText("entryModalTitle","Add New Entry");
+    setText("entryModalSubtitle","Create a new sales entry for this week");
+
+    populateTherapistDropdown();
+    renderDiscountSuggestions();
+    populateEntryDropdowns();
+
+    document.getElementById("entryModal").style.display="flex";
+    setTimeout(function(){
+      var el=document.getElementById("entryDate");
+      if(el) el.focus();
+    },100);
+  }
+
+  function closeEntryModal(){
+    editingEntryId=null;
+    document.getElementById("entryModal").style.display="none";
+    clearEntryForm();
+    closeAllMultiSelects();
+  }
+
+  function clearEntryForm(){
+    ["entryDate","clientName","therapist","wellness","timeSlot","payment","discount","totalAmount","shareAmount","netAmount","splitCashAmount","splitGcashAmount"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.value="";
+    });
+
+    selectedServices=[];
+    selectedAddons=[];
+    selectedOtherServices=[];
+
+    renderMultiTags("servicesTags",[],"Select Service");
+    renderMultiTags("addonsTags",[],"Select Add-On");
+    renderMultiTags("otherServicesTags",[],"Select Other Services");
+
+    ["servicesOptions","addonsOptions","otherServicesOptions"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.innerHTML="";
+    });
+
+    closeAllMultiSelects();
+    toggleSplitPaymentFields();
+  }
+
+  async function submitEntry(){
+    if(!appReady) return;
+
+    var date=((document.getElementById("entryDate")||{}).value||"");
+    var timeSlot=((document.getElementById("timeSlot")||{}).value||"");
+    var client=(((document.getElementById("clientName")||{}).value||"")).trim();
+    var therapist=((document.getElementById("therapist")||{}).value||"");
+    var wellness=((document.getElementById("wellness")||{}).value||"");
+    var payment=(((document.getElementById("payment")||{}).value||"")).trim();
+    var discount=(((document.getElementById("discount")||{}).value||"")).trim();
+
+    if(!date || !client || !therapist || !wellness){
+      alert("Please fill in Date, Name of Client, Therapist, and Wellness Option.");
+      return;
+    }
+
+    if(!selectedServices.length && !selectedAddons.length && !selectedOtherServices.length){
+      alert("Please select at least one service.");
+      return;
+    }
+
+    var total=parseMoney((document.getElementById("totalAmount")||{}).value);
+    var share=parseMoney((document.getElementById("shareAmount")||{}).value);
+    var net=parseMoney((document.getElementById("netAmount")||{}).value);
+
+    if(!validateSplitPayment(total)) return;
+
+    var splitAmounts=getSplitAmounts();
+
+    if(editingEntryId){
+      var upd={
+        id: editingEntryId,
+        date: date,
+        timeSlot: timeSlot,
+        client: client,
+        therapist: therapist,
+        wellness: wellness,
+        services: selectedServices.map(function(i){ return i.name; }),
+        addons: selectedAddons.map(function(i){ return i.name; }),
+        otherServices: selectedOtherServices.map(function(i){ return i.name; }),
+        total: total,
+        therapistShare: share,
+        net: net,
+        payment: payment,
+        discount: discount,
+        cashAmount: splitAmounts.cashAmount,
+        gcashAmount: splitAmounts.gcashAmount
+      };
+
+      await updateEntryInFirebase(upd);
+
+      var editDateObj=new Date(date+"T00:00:00");
+      var editWeek=getActiveWeekRange(editDateObj);
+      setWeekRange(editWeek.start, editWeek.end);
+
+      showSyncStatus("Updated ✓","ok");
+    } else {
+      var newId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      var entry={
+        id: newId,
+        date: date,
+        timeSlot: timeSlot,
+        client: client,
+        therapist: therapist,
+        wellness: wellness,
+        services: selectedServices.map(function(i){ return i.name; }),
+        addons: selectedAddons.map(function(i){ return i.name; }),
+        otherServices: selectedOtherServices.map(function(i){ return i.name; }),
+        total: total,
+        therapistShare: share,
+        net: net,
+        payment: payment,
+        discount: discount,
+        cashAmount: splitAmounts.cashAmount,
+        gcashAmount: splitAmounts.gcashAmount
+      };
+
+      await saveEntryToFirebase(entry);
+
+      var entryDateObj=new Date(date+"T00:00:00");
+      var entryWeek=getActiveWeekRange(entryDateObj);
+      setWeekRange(entryWeek.start, entryWeek.end);
+
+      showSyncStatus("Saved ✓","ok");
+    }
+
+    closeEntryModal();
+  }
+
+  /* ============================================================
+     EXPENSE MODAL
+  ============================================================ */
+  function toggleExpenseOtherField(){
+    var sel=document.getElementById("expenseParticularsSelect");
+    var wrap=document.getElementById("expenseOtherWrap");
+    if(!sel || !wrap) return;
+
+    wrap.style.display=sel.value==="Other" ? "flex" : "none";
+    if(sel.value!=="Other"){
+      var el=document.getElementById("expenseOtherParticulars");
+      if(el) el.value="";
+    }
+  }
+
+  // LOYALTY FUNCTIONS
+  function openLoyaltyEntryModal(){
+    if(!appReady) return;
+
+    editingLoyaltyId=null;
+    clearLoyaltyForm();
+
+    setText("loyaltyModalTitle","Add New Loyalty Sales");
+    setText("loyaltyModalSubtitle","Create a new loyalty card sales entry");
+
+    document.getElementById("loyaltyModal").style.display="flex";
+    setTimeout(function(){
+      var el=document.getElementById("loyaltyDate");
+      if(el) el.focus();
+    },100);
+  }
+
+  function closeLoyaltyModal(){
+    editingLoyaltyId=null;
+    document.getElementById("loyaltyModal").style.display="none";
+    clearLoyaltyForm();
+  }
+
+  function clearLoyaltyForm(){
+    ["loyaltyDate","loyaltyClientName","loyaltyAmount","loyaltyPayment"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.value="";
+    });
+  }
+
+  async function submitLoyaltyEntry(){
+    if(!appReady) return;
+
+    var date=((document.getElementById("loyaltyDate")||{}).value||"");
+    var client=(((document.getElementById("loyaltyClientName")||{}).value||"")).trim();
+    var amount=(((document.getElementById("loyaltyAmount")||{}).value||"")).trim();
+    var payment=(((document.getElementById("loyaltyPayment")||{}).value||"")).trim();
+
+    if(!date || !client || !amount || !payment){
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    var amt = parseFloat(amount);
+    if(isNaN(amt) || amt <= 0){
+      alert("Please enter a valid amount.");
+      return;
+    }
+
+    var loyaltyId = editingLoyaltyId || Date.now().toString();
+    
+    try {
+      await window.db.collection("loyalty").doc(loyaltyId).set({
+        branch: CURRENT_BRANCH,
+        id: loyaltyId,
+        date: date,
+        client: client,
+        amount: Number(amt),
+        payment: payment,
+        updatedAt: new Date().toISOString(),
+        createdAt: editingLoyaltyId ? undefined : new Date().toISOString()
+      }, { merge: true });
+      closeLoyaltyModal();
+    } catch(e){
+      console.error("Save loyalty entry failed:", e);
+      alert("Error saving loyalty entry: " + e.message);
+    }
+  }
+
+  function editLoyaltyEntry(id){
+    var entry = DB.loyalty.find(function(e){ return e.id === id; });
+    if(!entry) return;
+
+    editingLoyaltyId = id;
+    clearLoyaltyForm();
+
+    setText("loyaltyModalTitle","Edit Loyalty Sales");
+    setText("loyaltyModalSubtitle","Update this loyalty sales entry");
+
+    document.getElementById("loyaltyDate").value = entry.date;
+    document.getElementById("loyaltyClientName").value = entry.client;
+    document.getElementById("loyaltyAmount").value = entry.amount;
+    document.getElementById("loyaltyPayment").value = entry.payment;
+    document.getElementById("loyaltyModal").style.display="flex";
+  }
+
+  async function deleteLoyaltyEntry(id){
+    if(!confirm("Delete this loyalty entry?")) return;
+
+    try {
+      await db.collection("loyalty").doc(id).delete();
+    } catch(e){
+      alert("Error deleting loyalty entry: " + e.message);
+    }
+  }
+
+  function openExpenseModal(){
+    if(!appReady) return;
+
+    editingExpenseId=null;
+    clearExpenseForm();
+    setText("expenseModalTitle","Add Expense");
+    setText("expenseModalSubtitle","Create a new expense entry");
+    document.getElementById("expenseModal").style.display="flex";
+
+    setTimeout(function(){
+      var el=document.getElementById("expenseDate");
+      if(el) el.focus();
+    },100);
+  }
+
+  function closeExpenseModal(){
+    editingExpenseId=null;
+    setText("expenseModalTitle","Add Expense");
+    setText("expenseModalSubtitle","Create a new expense entry");
+    document.getElementById("expenseModal").style.display="none";
+    clearExpenseForm();
+  }
+
+  function clearExpenseForm(){
+    ["expenseDate","expenseParticularsSelect","expenseOtherParticulars","expenseAmount"].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.value="";
+    });
+    var wrap=document.getElementById("expenseOtherWrap");
+    if(wrap) wrap.style.display="none";
+  }
+
+  async function submitExpense(){
+    if(!appReady) return;
+
+    var date=((document.getElementById("expenseDate")||{}).value||"");
+    var selVal=((document.getElementById("expenseParticularsSelect")||{}).value||"");
+    var otherVal=(((document.getElementById("expenseOtherParticulars")||{}).value||"")).trim();
+    var amtInput=(((document.getElementById("expenseAmount")||{}).value||"")).trim();
+
+    var particulars=selVal==="Other" ? otherVal : selVal;
+
+    if(!date || !particulars || !amtInput){
+      alert("Please fill in Date, Particulars, and Amount.");
+      return;
+    }
+
+    var amount=parseMoney(amtInput);
+
+    if(editingExpenseId){
+      var upd={
+        id: editingExpenseId,
+        date: date,
+        particulars: particulars,
+        amount: amount
+      };
+
+      await updateExpenseInFirebase(upd);
+
+      var editExpenseDateObj = new Date(date + "T00:00:00");
+      var editWeekRange = getActiveWeekRange(editExpenseDateObj);
+      setExpensesWeekRange(editWeekRange.start, editWeekRange.end);
+
+      editingExpenseId=null;
+      showSyncStatus("Expense updated ✓","ok");
+    } else {
+      var newId=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      var expense={
+        id: newId,
+        date: date,
+        particulars: particulars,
+        amount: amount
+      };
+
+      await saveExpenseToFirebase(expense);
+
+      var expenseDateObj = new Date(date + "T00:00:00");
+      var weekRange = getActiveWeekRange(expenseDateObj);
+      setExpensesWeekRange(weekRange.start, weekRange.end);
+
+      showSyncStatus("Expense saved ✓","ok");
+    }
+
+    closeExpenseModal();
+  }
+
+  /* ============================================================
+     GLOBAL EVENTS
+  ============================================================ */
+  function showConfirm(msg,cb){
+    var modal=document.getElementById("customModal");
+    document.getElementById("modalMessage").innerText=msg;
+    modal.style.display="flex";
+
+    document.getElementById("modalOk").onclick=function(){
+      modal.style.display="none";
+      cb(true);
+    };
+    document.getElementById("modalCancel").onclick=function(){
+      modal.style.display="none";
+      cb(false);
+    };
+  }
+
+  window.onclick=function(ev){
+    if(ev.target===document.getElementById("entryModal")) closeEntryModal();
+    if(ev.target===document.getElementById("expenseModal")) closeExpenseModal();
+    if(ev.target===document.getElementById("loyaltyModal")) closeLoyaltyModal();
+  };
+
+  document.addEventListener("click",function(e){
+    if(!e.target.closest(".multi-select-box")) closeAllMultiSelects();
+  });
+
+  /* ============================================================
+     INIT
+  ============================================================ */
+  document.addEventListener("DOMContentLoaded", function(){
+    setAppReady(false);
+
+    var r=getActiveWeekRange(new Date());
+    setWeekRange(r.start, r.end);
+    setSalaryWeekRange(r.start, r.end);
+    setSummaryWeekRange(r.start, r.end);
+    setExpensesWeekRange(r.start, r.end);
+    setPerformanceView("weekly");
+
+    (window.firebaseReady || Promise.resolve()).then(function(){
+  initAuthListener();
+}).catch(function(err){
+  console.error("Firebase init error:", err);
+  showLoginScreen();
+  setLoginMessage("Firebase unavailable.", true);
+});
+
+    var timeSlotSel=document.getElementById("timeSlot");
+    if(timeSlotSel) timeSlotSel.addEventListener("change", populateEntryDropdowns);
+
+    var wellnessSel=document.getElementById("wellness");
+    if(wellnessSel) wellnessSel.addEventListener("change", function(){
+      if(this.value==="Home Service"){
+        var ts=document.getElementById("timeSlot");
+        if(ts) ts.value="";
+      }
+      populateEntryDropdowns();
+    });
+
+    var discountEl=document.getElementById("discount");
+    if(discountEl){
+      discountEl.addEventListener("change", computeEntryAmounts);
+      discountEl.addEventListener("blur", computeEntryAmounts);
+    }
+
+    var expAmt=document.getElementById("expenseAmount");
+    if(expAmt){
+      expAmt.addEventListener("blur", function(){
+        var v=parseMoney(this.value);
+        this.value=v?formatMoney(v):"";
+      });
+    }
+
+    var paymentEl=document.getElementById("payment");
+    if(paymentEl) paymentEl.addEventListener("change", toggleSplitPaymentFields);
+
+    var splitCashEl=document.getElementById("splitCashAmount");
+    if(splitCashEl){
+      splitCashEl.addEventListener("blur", function(){
+        var v=parseMoney(this.value);
+        this.value=v?formatMoney(v):"";
+      });
+    }
+
+    var splitGcashEl=document.getElementById("splitGcashAmount");
+    if(splitGcashEl){
+      splitGcashEl.addEventListener("blur", function(){
+        var v=parseMoney(this.value);
+        this.value=v?formatMoney(v):"";
+      });
+    }
+
+        var loginNameInput = document.getElementById("loginName");
+    var loginPasswordInput = document.getElementById("loginPassword");
+
+    if(loginNameInput){
+      loginNameInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter") loginUser();
+      });
+    }
+
+    if(loginPasswordInput){
+      loginPasswordInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter") loginUser();
+      });
+    }
+
+    if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(() => console.log("SW registered"))
+    .catch(err => console.log("SW error:", err));
+}
+  });
+  </script>
+</body>
+</html>
