@@ -602,21 +602,22 @@
 
   body {
     flex-direction: column;
+    display: flex;
     height: auto;
     overflow: auto;
     background: linear-gradient(135deg, #eaf2fb 0%, #cfdff1 100%);
   }
 
   .sidebar {
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: auto;
+    width: 80%;
+    height: 100vh;
     margin-left: 0;
     padding: 10px 10px 8px;
     display: block;
-    z-index: 1500;
+    z-index: 1000;
     background: #132e4f;
     box-sizing: border-box;
     overflow-x: auto;
@@ -668,8 +669,8 @@
   }
 
   .content-area {
-    margin-left: 0;
-    width: 100%;
+    margin-left: 80px;
+    width: calc(100% - 80px);
     height: auto;
     min-height: calc(100vh - 96px);
     padding: 0;
