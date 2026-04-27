@@ -719,6 +719,11 @@
     .cancel-btn, .save-btn { width: 100%; }
   }
 
+  #therapistModal .modal-content {
+  width: 420px;
+  padding: 10px;
+}
+
   @media (max-width: 400px) {
     .summary-section-value { font-size: 14px; }
     th { font-size: 10px; padding: 8px; }
@@ -873,6 +878,30 @@
       </div>
     </div>
   </div>
+
+ <div id="therapistModal" class="modal" style="display:none;">
+  <div class="modal-content">
+
+    <div class="entry-modal-header">
+      <h2 class="entry-modal-title">Add Therapists</h2>
+      <div class="entry-modal-subtitle">Add multiple therapists</div>
+    </div>
+
+    <div class="entry-modal-body">
+
+      <div id="therapistList"></div>
+
+      <button class="nav-btn" style="margin-top:10px;" onclick="addTherapistInput()">+ Add Row</button>
+
+      <div class="modal-actions">
+        <button class="cancel-btn" onclick="closeTherapistModal()">Cancel</button>
+        <button class="save-btn" onclick="saveAllTherapists()">Save All</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
   <!-- LOYALTY ENTRY MODAL -->
   <div id="loyaltyModal" class="modal">
@@ -1333,7 +1362,7 @@
         <div class="settings-actions"><button type="button" class="nav-btn" onclick="addDiscountRow()">+ Add Discount</button></div>
         <div class="settings-table-wrap" style="margin-bottom:24px;">
           <table class="settings-table">
-            <thead><tr><th>Type</th><th>Value</th><th>Mode (fixed/percent)</th><th>Action</th></tr></thead>
+            <thead><tr><th>Type</th><th>Value</th><th>Mode (fixed/percent)</th><th>Company Only</th><th>Action</th></tr></thead>
             <tbody id="discountTableBody"></tbody>
           </table>
         </div>
@@ -1351,7 +1380,7 @@
 
     <div class="system-footer">
       <div class="footer-left">De-Stress Massage &amp; Spa Operation Dashboard</div>
-      <div class="footer-right">System Version 2.0 • 2026 Developed by AFV</div>
+      <div class="footer-right">System Version 2.0 • 2026 </div>
     </div>
   </div>
 
@@ -1371,7 +1400,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <!-- ALL ORIGINAL JAVASCRIPT UNCHANGED BELOW -->
   <script>
   (function () {
     var cfg = {
@@ -1416,7 +1444,10 @@
     ],
     therapists: [{ name:"Ana" }, { name:"Joy" }, { name:"Mira" }],
     share: [{ type:"Spa", rate:35 }, { type:"Home Service", rate:40 }],
-    discount: [{ type:"Senior Citizen", value:20, mode:"percent" }, { type:"Promo Less 100", value:100, mode:"fixed" }],
+    discount: [
+      { type:"Senior Citizen", value:20,  mode:"percent", companyOnly:false },
+      { type:"Promo Less 100", value:100, mode:"fixed",   companyOnly:false }
+    ],
     deductions: [
       { name:"SSS",                  therapistShare:375, companyShare:375 },
       { name:"Pag-IBIG",             therapistShare:200, companyShare:200 },
@@ -1489,9 +1520,56 @@
   function initAuthListener(){
     window.auth.onAuthStateChanged(async function(user){
       if(!user){ showLoginScreen(); return; }
-      try{ await loadUserProfile(user.uid); await ensureSettingsDocExists(); startRealtimeSync(); showDashboardScreen(); showSection("homeSection",document.querySelector(".sidebar button")); showSyncStatus("Connected to Firebase ✓","ok"); }
+      try{
+        await loadUserProfile(user.uid);
+        await ensureSettingsDocExists();
+        // ─── CHANGE 1: Auto-migrate local therapists to global collection after login ───
+        await migrateTherapistsToGlobal();
+        startRealtimeSync();
+        showDashboardScreen();
+        showSection("homeSection",document.querySelector(".sidebar button"));
+        showSyncStatus("Connected to Firebase ✓","ok");
+      }
       catch(err){ console.error("Auth init failed:",err); await window.auth.signOut(); showLoginScreen(); setLoginMessage(err.message||"Unable to load account.",true); }
     });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHANGE 1: AUTO-MIGRATE local settings.therapists → global `therapists` collection
+  //
+  // How it works:
+  //   - Reads settings.therapists for this branch (e.g. ["Ana","Joy","Mira"])
+  //   - For each name, creates/updates a doc in `therapists` collection
+  //   - Doc ID = lowercased+trimmed name (e.g. "ana", "joy")
+  //   - Adds CURRENT_BRANCH to the `branches` array if not already there
+  //   - Does NOT overwrite existing global therapist docs — uses merge:true
+  //   - After migration, entries still save `therapist` as the NAME (backward compat)
+  // ═══════════════════════════════════════════════════════════════════
+  async function migrateTherapistsToGlobal(){
+    try{
+      if(!DB.settings||!DB.settings.therapists||!CURRENT_BRANCH) return;
+      var batch=window.db.batch();
+      var batchCount=0;
+      DB.settings.therapists.forEach(function(t){
+        var name=String((t&&t.name)||"").trim();
+        if(!name) return;
+        var docId=name.toLowerCase().replace(/\s+/g,"-");
+        var ref=window.db.collection("therapists").doc(docId);
+        batch.set(ref,{
+          name: name,
+          branches: firebase.firestore.FieldValue.arrayUnion(CURRENT_BRANCH),
+          updatedAt: new Date().toISOString()
+        },{merge:true});
+        batchCount++;
+      });
+      if(batchCount>0){
+        await batch.commit();
+        console.log("Therapist migration complete: "+batchCount+" therapist(s) synced to global collection.");
+      }
+    }catch(err){
+      // Non-fatal — log only, don't block login
+      console.error("Therapist migration warning:",err);
+    }
   }
 
   function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
@@ -1593,13 +1671,84 @@
   function renderSettingsTable(tbodyId,data,type){ var tbody=document.getElementById(tbodyId); if(!tbody) return; tbody.innerHTML=""; data.forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',0,this)">'+escapeHtml(item.name)+'</td>'+'<td contenteditable="true" class="price-cell" onblur="saveSettingsRow(\''+type+'\','+idx+',1,this)">\u20B1'+escapeHtml(formatMoney(item.price))+'</td>'+'<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',2,this)">'+escapeHtml(item.timeSlot)+'</td>'+'<td contenteditable="true" onblur="saveSettingsRow(\''+type+'\','+idx+',3,this)">'+escapeHtml(item.category)+'</td>'+'<td><button type="button" class="delete-btn" onclick="deleteSettingsRow(\''+type+'\','+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
   function renderTherapistTable(){ var tbody=document.getElementById("therapistSettingsBody"); if(!tbody) return; tbody.innerHTML=""; DB.settings.therapists.forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveTherapistRow('+idx+',this)">'+escapeHtml(item.name)+'</td>'+'<td><button type="button" class="delete-btn" onclick="deleteTherapistRow('+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
   function renderShareTable(){ var tbody=document.getElementById("shareTableBody"); if(!tbody) return; tbody.innerHTML=""; (DB.settings.share||[]).forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveShareRow('+idx+',0,this)">'+escapeHtml(item.type)+'</td>'+'<td contenteditable="true" onblur="saveShareRow('+idx+',1,this)">'+escapeHtml(String(item.rate||0))+'</td>'+'<td><button class="delete-btn" onclick="deleteShareRow('+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
-  function renderDiscountTable(){ var tbody=document.getElementById("discountTableBody"); if(!tbody) return; tbody.innerHTML=""; (DB.settings.discount||[]).forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveDiscountRow('+idx+',0,this)">'+escapeHtml(item.type)+'</td>'+'<td contenteditable="true" onblur="saveDiscountRow('+idx+',1,this)">'+escapeHtml(String(item.value||0))+'</td>'+'<td contenteditable="true" onblur="saveDiscountRow('+idx+',2,this)">'+escapeHtml(item.mode||"fixed")+'</td>'+'<td><button class="delete-btn" onclick="deleteDiscountRow('+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
+  function renderDiscountTable(){ var tbody=document.getElementById("discountTableBody"); if(!tbody) return; tbody.innerHTML=""; (DB.settings.discount||[]).forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveDiscountRow('+idx+',0,this)">'+escapeHtml(item.type)+'</td>'+'<td contenteditable="true" onblur="saveDiscountRow('+idx+',1,this)">'+escapeHtml(String(item.value||0))+'</td>'+'<td contenteditable="true" onblur="saveDiscountRow('+idx+',2,this)">'+escapeHtml(item.mode||"fixed")+'</td>'+'<td style="text-align:center;"><input type="checkbox" '+(item.companyOnly?'checked':'')+'  onchange="saveDiscountCompanyOnly('+idx+',this.checked)"></td>'+'<td><button class="delete-btn" onclick="deleteDiscountRow('+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
   function renderDeductionTable(){ var tbody=document.getElementById("deductionTableBody"); if(!tbody) return; tbody.innerHTML=""; (DB.settings.deductions||[]).forEach(function(item,idx){ var tr=document.createElement("tr"); tr.innerHTML='<td contenteditable="true" onblur="saveDeductionRow('+idx+',0,this)">'+escapeHtml(item.name)+'</td>'+'<td contenteditable="true" onblur="saveDeductionRow('+idx+',1,this)">'+escapeHtml(String(item.therapistShare||0))+'</td>'+'<td contenteditable="true" onblur="saveDeductionRow('+idx+',2,this)">'+escapeHtml(String(item.companyShare||0))+'</td>'+'<td><button class="delete-btn" onclick="deleteDeductionRow('+idx+')">Delete</button></td>'; tbody.appendChild(tr); }); }
   function renderDiscountSuggestions(){ if(!DB.settings) return; var select=document.getElementById("discount"); if(!select) return; var cur=select.value||""; select.innerHTML='<option value="">Select Discount</option>'; (DB.settings.discount||[]).forEach(function(item){ if(!item.type) return; var opt=document.createElement("option"); opt.value=item.type; opt.textContent=item.type; select.appendChild(opt); }); if((DB.settings.discount||[]).some(function(item){ return item.type===cur; })) select.value=cur; }
   function saveSettingsRow(type,idx,col,el){ var arr=type==="service"?DB.settings.services:type==="addon"?DB.settings.addons:DB.settings.otherServices; if(!arr[idx]) return; var val=el.innerText.trim(); if(col===0) arr[idx].name=val; if(col===1){ arr[idx].price=String(parseMoney(val)); el.innerText="\u20B1"+formatMoney(parseMoney(val)); } if(col===2) arr[idx].timeSlot=val; if(col===3) arr[idx].category=val; saveSettingsToFirebase(); }
-  function saveTherapistRow(idx,el){ if(DB.settings.therapists[idx]){ DB.settings.therapists[idx].name=el.innerText.trim(); saveSettingsToFirebase(); } }
+  function addTherapistInput(value = "") {
+  const container = document.getElementById("therapistList");
+
+  const div = document.createElement("div");
+  div.className = "field-block full";
+
+  div.innerHTML = `
+    <div style="display:flex; gap:10px;">
+      <input type="text" value="${value}" placeholder="Enter therapist name" />
+      <button class="delete-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>
+    </div>
+  `;
+
+  container.appendChild(div);
+}
+
+function openTherapistModal() {
+  document.getElementById("therapistModal").style.display = "flex";
+
+  const list = document.getElementById("therapistList");
+  list.innerHTML = "";
+
+  addTherapistInput(); // ✅ important
+}
+
+function saveAllTherapists() {
+  const inputs = document.querySelectorAll("#therapistList input");
+
+  inputs.forEach(input => {
+    let name = input.value.trim();
+    if (!name) return;
+
+    // local
+    DB.settings.therapists.push({ name: name });
+    if (DB.settings.therapists.some(t => t.name === name)) return;
+
+    // global
+    let docId = name.toLowerCase().replace(/\s+/g, "-");
+
+    window.db.collection("therapists").doc(docId).set({
+      name: name,
+      branches: firebase.firestore.FieldValue.arrayUnion(CURRENT_BRANCH),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  });
+
+  renderTherapistTable();
+  saveSettingsToFirebase();
+  closeTherapistModal();
+}
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHANGE 2: saveTherapistRow — also updates global `therapists` collection
+  //   when a therapist name is edited in settings
+  // ═══════════════════════════════════════════════════════════════════
+  function saveTherapistRow(idx,el){
+    if(!DB.settings.therapists[idx]) return;
+    var newName=el.innerText.trim();
+    if(!newName) return;
+    DB.settings.therapists[idx].name=newName;
+    saveSettingsToFirebase();
+    // Sync to global therapists collection
+    var docId=newName.toLowerCase().replace(/\s+/g,"-");
+    window.db.collection("therapists").doc(docId).set({
+      name: newName,
+      branches: firebase.firestore.FieldValue.arrayUnion(CURRENT_BRANCH),
+      updatedAt: new Date().toISOString()
+    },{merge:true}).catch(function(err){ console.error("Global therapist sync failed:",err); });
+  }
+
   function saveShareRow(idx,col,el){ if(!DB.settings.share[idx]) return; var val=el.innerText.trim(); if(col===0) DB.settings.share[idx].type=val; if(col===1){ DB.settings.share[idx].rate=Number(val)||0; el.innerText=String(DB.settings.share[idx].rate); } saveSettingsToFirebase(); }
   function saveDiscountRow(idx,col,el){ if(!DB.settings.discount[idx]) return; var val=el.innerText.trim(); if(col===0) DB.settings.discount[idx].type=val; if(col===1) DB.settings.discount[idx].value=Number(val)||0; if(col===2){ val=val.toLowerCase(); DB.settings.discount[idx].mode=(val==="percent")?"percent":"fixed"; el.innerText=DB.settings.discount[idx].mode; } saveSettingsToFirebase(); renderDiscountSuggestions(); }
+  function saveDiscountCompanyOnly(idx,checked){ if(!DB.settings.discount[idx]) return; DB.settings.discount[idx].companyOnly=!!checked; saveSettingsToFirebase(); }
   function saveDeductionRow(idx,col,el){ DB.settings.deductions=DB.settings.deductions||[]; if(!DB.settings.deductions[idx]) return; var val=el.innerText.trim(); if(col===0) DB.settings.deductions[idx].name=val; if(col===1) DB.settings.deductions[idx].therapistShare=Number(val)||0; if(col===2) DB.settings.deductions[idx].companyShare=Number(val)||0; saveSettingsToFirebase(); refreshSummarySection(); refreshExpensesSection(); }
   function deleteSettingsRow(type,idx){ var arr=type==="service"?DB.settings.services:type==="addon"?DB.settings.addons:DB.settings.otherServices; arr.splice(idx,1); renderSettingsTables(); saveSettingsToFirebase(); }
   function deleteTherapistRow(idx){ DB.settings.therapists.splice(idx,1); renderTherapistTable(); saveSettingsToFirebase(); }
@@ -1609,9 +1758,77 @@
   function addServiceRow(){ DB.settings.services.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("servicesTab",document.querySelector(".settings-tab-btn")); saveSettingsToFirebase(); }
   function addAddonRow(){ DB.settings.addons.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("addonsTab",document.querySelectorAll(".settings-tab-btn")[1]); saveSettingsToFirebase(); }
   function addOtherServiceRow(){ DB.settings.otherServices.push({name:"",price:"0",timeSlot:"",category:""}); renderSettingsTables(); showSettingsTab("otherServicesTab",document.querySelectorAll(".settings-tab-btn")[2]); saveSettingsToFirebase(); }
-  function addTherapistRow(){ DB.settings.therapists.push({name:""}); renderTherapistTable(); saveSettingsToFirebase(); }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHANGE 3: addTherapistRow — writes to global `therapists` collection
+  //   AND local settings. Prompts for a name first so the doc ID is correct.
+  // ═══════════════════════════════════════════════════════════════════
+  function addTherapistRow(){
+  openTherapistModal();
+}
+  
+  function openTherapistModal() {
+  const modal = document.getElementById("therapistModal");
+  const list = document.getElementById("therapistList");
+
+  modal.style.display = "flex";
+  list.innerHTML = "";
+
+  addTherapistInput(); // start with 1 row
+}
+
+function closeTherapistModal() {
+  document.getElementById("therapistModal").style.display = "none";
+  document.getElementById("therapistList").innerHTML = "";
+}
+
+function addTherapistInput(value = "") {
+  const container = document.getElementById("therapistList");
+
+  const div = document.createElement("div");
+  div.className = "field-block full";
+
+  div.innerHTML = `
+    <div style="display:flex; gap:10px;">
+      <input type="text" value="${value}" placeholder="Enter therapist name" style="flex:1;" />
+      <button class="delete-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>
+    </div>
+  `;
+
+  container.appendChild(div);
+}
+
+function saveAllTherapists() {
+  const inputs = document.querySelectorAll("#therapistList input");
+
+  inputs.forEach(input => {
+    let name = input.value.trim();
+    if (!name) return;
+
+    // prevent duplicate sa local
+    if (DB.settings.therapists.some(t => t.name === name)) return;
+
+    // local save
+    DB.settings.therapists.push({ name: name });
+
+    // global firestore
+    let docId = name.toLowerCase().replace(/\s+/g, "-");
+
+    window.db.collection("therapists").doc(docId).set({
+      name: name,
+      branches: firebase.firestore.FieldValue.arrayUnion(CURRENT_BRANCH),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  });
+
+  renderTherapistTable();
+  saveSettingsToFirebase();
+  closeTherapistModal();
+}
+
   function addShareRow(){ DB.settings.share=DB.settings.share||[]; DB.settings.share.push({type:"",rate:0}); renderShareTable(); saveSettingsToFirebase(); }
-  function addDiscountRow(){ DB.settings.discount=DB.settings.discount||[]; DB.settings.discount.push({type:"",value:0,mode:"fixed"}); renderDiscountTable(); renderDiscountSuggestions(); saveSettingsToFirebase(); }
+  function addDiscountRow(){ DB.settings.discount=DB.settings.discount||[]; DB.settings.discount.push({type:"",value:0,mode:"fixed",companyOnly:false}); renderDiscountTable(); renderDiscountSuggestions(); saveSettingsToFirebase(); }
   function addDeductionRow(){ DB.settings.deductions=DB.settings.deductions||[]; DB.settings.deductions.push({name:"",therapistShare:0,companyShare:0}); renderDeductionTable(); saveSettingsToFirebase(); }
   function attachPriceFormatters(){ document.querySelectorAll(".price-cell[contenteditable='true']").forEach(function(cell){ if(cell.dataset.bound==="true") return; cell.dataset.bound="true"; cell.addEventListener("focus",function(){ this.innerText=String(parseMoney(this.innerText)); }); cell.addEventListener("blur",function(){ this.innerText="\u20B1"+formatMoney(parseMoney(this.innerText)); }); cell.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); this.blur(); } }); }); }
 
@@ -1621,9 +1838,85 @@
   function renderMultiOptions(cId,items,sel,type){ var c=document.getElementById(cId); if(!c) return; c.innerHTML=""; if(!items.length){ c.innerHTML='<div class="multi-option"><div class="multi-option-text"><div class="multi-option-name">No options available</div></div></div>'; return; } items.forEach(function(item){ var checked=sel.some(function(s){ return s.name===item.name; }); var label=document.createElement("label"); label.className="multi-option"; label.innerHTML='<input type="checkbox"'+(checked?" checked":"")+'>'+'<div class="multi-option-text"><div class="multi-option-name">'+escapeHtml(item.name)+'</div><div class="multi-option-meta">\u20B1'+formatMoney(item.price)+(item.timeSlot?" • "+item.timeSlot:"")+(item.category?" • "+item.category:"")+'</div></div>'; label.querySelector("input").addEventListener("change",function(){ handleMultiSelect(type,item,this.checked); }); c.appendChild(label); }); }
   function handleMultiSelect(type,item,isChecked){ var list=type==="service"?selectedServices:type==="addon"?selectedAddons:selectedOtherServices; if(isChecked){ if(!list.some(function(x){ return x.name===item.name; })) list.push(item); }else{ var i=list.findIndex(function(x){ return x.name===item.name; }); if(i>-1) list.splice(i,1); } if(type==="service") renderMultiTags("servicesTags",selectedServices,"Select Service"); else if(type==="addon") renderMultiTags("addonsTags",selectedAddons,"Select Add-On"); else renderMultiTags("otherServicesTags",selectedOtherServices,"Select Other Services"); computeEntryAmounts(); }
 
-  function populateTherapistDropdown(){ if(!DB.settings) return; var sel=document.getElementById("therapist"); if(!sel) return; sel.innerHTML='<option value="">Select Therapist</option>'; DB.settings.therapists.forEach(function(t){ var opt=document.createElement("option"); opt.value=t.name; opt.textContent=t.name; sel.appendChild(opt); }); }
+  // ═══════════════════════════════════════════════════════════════════
+  // CHANGE 1b: populateTherapistDropdown — queries global `therapists`
+  //   collection filtered by CURRENT_BRANCH. Falls back to local settings
+  //   if query fails (e.g. Firestore rules not yet updated).
+  //   IMPORTANT: saves therapist NAME (not doc ID) as option value,
+  //   so existing entries stay backward compatible.
+  // ═══════════════════════════════════════════════════════════════════
+  async function populateTherapistDropdown(){
+    var sel=document.getElementById("therapist");
+    if(!sel) return;
+    var currentVal=sel.value||"";
+    sel.innerHTML='<option value="">Select Therapist</option>';
+    try{
+      var snap=await window.db.collection("therapists")
+        .where("branches","array-contains",CURRENT_BRANCH)
+        .get();
+      var names=[];
+      snap.forEach(function(doc){
+        var data=doc.data();
+        if(data&&data.name) names.push(data.name);
+      });
+      // If global collection is empty or not yet populated, fall back to local settings
+      if(!names.length && DB.settings && DB.settings.therapists){
+        names=(DB.settings.therapists||[]).map(function(t){ return t&&t.name||""; }).filter(Boolean);
+      }
+      names.sort().forEach(function(name){
+        var opt=document.createElement("option");
+        opt.value=name;       // ← NAME saved, not ID (backward compatible)
+        opt.textContent=name;
+        sel.appendChild(opt);
+      });
+      if(currentVal) sel.value=currentVal;
+    }catch(err){
+      console.error("Error loading therapists from global collection:",err);
+      // Fallback to local settings
+      if(DB.settings&&DB.settings.therapists){
+        (DB.settings.therapists||[]).forEach(function(t){
+          if(!t||!t.name) return;
+          var opt=document.createElement("option");
+          opt.value=t.name;
+          opt.textContent=t.name;
+          sel.appendChild(opt);
+        });
+        if(currentVal) sel.value=currentVal;
+      }
+    }
+  }
+
   function populateEntryDropdowns(){ if(!DB.settings) return; var wv=((document.getElementById("wellness")||{}).value||"").trim().toLowerCase(); var tv=((document.getElementById("timeSlot")||{}).value||"").trim().toLowerCase(); selectedServices=[]; selectedAddons=[]; selectedOtherServices=[]; renderMultiTags("servicesTags",[],"Select Service"); renderMultiTags("addonsTags",[],"Select Add-On"); renderMultiTags("otherServicesTags",[],"Select Other Services"); if(!wv){ renderMultiOptions("servicesOptions",[],[],"service"); renderMultiOptions("addonsOptions",[],[],"addon"); renderMultiOptions("otherServicesOptions",[],[],"other"); computeEntryAmounts(); return; } function match(item){ var c=(item.category||"").trim().toLowerCase(); var sl=(item.timeSlot||"").trim().toLowerCase(); return c===wv&&(!tv||!sl||sl===tv); } renderMultiOptions("servicesOptions",DB.settings.services.filter(match),selectedServices,"service"); renderMultiOptions("addonsOptions",DB.settings.addons.filter(match),selectedAddons,"addon"); renderMultiOptions("otherServicesOptions",DB.settings.otherServices.filter(match),selectedOtherServices,"other"); computeEntryAmounts(); }
-  function computeEntryAmounts(){ if(!DB.settings) return; var pre=[].concat(selectedServices,selectedAddons,selectedOtherServices).reduce(function(s,i){ return s+parseMoney(i.price); },0); var category=((document.getElementById("wellness")||{}).value||""); var discountInput=(((document.getElementById("discount")||{}).value||"")).trim(); var dAmount=0; if(discountInput){ var md=(DB.settings.discount||[]).find(function(d){ return String(d.type||"").toLowerCase()===discountInput.toLowerCase(); }); if(md){ var dv=Number(md.value)||0; var dm=String(md.mode||"fixed").toLowerCase(); dAmount=dm==="percent"?pre*(dv/100):dv; } } if(dAmount>pre) dAmount=pre; var total=pre-dAmount; var ms=(DB.settings.share||[]).find(function(s){ return String(s.type||"").trim().toLowerCase()===String(category||"").trim().toLowerCase(); }); var rate=ms?Number(ms.rate)||0:0; if(rate>1) rate=rate/100; var share=total*rate; var net=total-share; var el; el=document.getElementById("totalAmount"); if(el) el.value=formatPeso(total); el=document.getElementById("shareAmount"); if(el) el.value=formatPeso(share); el=document.getElementById("netAmount"); if(el) el.value=formatPeso(net); }
+
+  function computeEntryAmounts(){
+    if(!DB.settings) return;
+    var pre=[].concat(selectedServices,selectedAddons,selectedOtherServices).reduce(function(s,i){ return s+parseMoney(i.price); },0);
+    var category=((document.getElementById("wellness")||{}).value||"");
+    var discountInput=(((document.getElementById("discount")||{}).value||"")).trim();
+    var dAmount=0;
+    var md=null;
+    if(discountInput){
+      md=(DB.settings.discount||[]).find(function(d){ return String(d.type||"").toLowerCase()===discountInput.toLowerCase(); });
+      if(md){
+        var dv=Number(md.value)||0;
+        var dm=String(md.mode||"fixed").toLowerCase();
+        dAmount=dm==="percent"?pre*(dv/100):dv;
+      }
+    }
+    if(dAmount>pre) dAmount=pre;
+    var total=pre-dAmount;
+    var ms=(DB.settings.share||[]).find(function(s){ return String(s.type||"").trim().toLowerCase()===String(category||"").trim().toLowerCase(); });
+    var rate=ms?Number(ms.rate)||0:0;
+    if(rate>1) rate=rate/100;
+    var shareBase=(md&&md.companyOnly)?pre:total;
+    var share=shareBase*rate;
+    var net=total-share;
+    var el;
+    el=document.getElementById("totalAmount"); if(el) el.value=formatPeso(total);
+    el=document.getElementById("shareAmount"); if(el) el.value=formatPeso(share);
+    el=document.getElementById("netAmount");   if(el) el.value=formatPeso(net);
+  }
+
   function toggleSplitPaymentFields(){ var paymentEl=document.getElementById("payment"); var wrap=document.getElementById("splitPaymentWrap"); if(!paymentEl||!wrap) return; if(paymentEl.value==="Split"){ wrap.style.display="block"; }else{ wrap.style.display="none"; var cashEl=document.getElementById("splitCashAmount"); if(cashEl) cashEl.value=""; var gcashEl=document.getElementById("splitGcashAmount"); if(gcashEl) gcashEl.value=""; } }
   function getSplitAmounts(){ var payment=((document.getElementById("payment")||{}).value||"").trim(); var cashAmount=0,gcashAmount=0; if(payment==="Cash"){ cashAmount=parseMoney((document.getElementById("totalAmount")||{}).value); }else if(payment==="Gcash"){ gcashAmount=parseMoney((document.getElementById("totalAmount")||{}).value); }else if(payment==="Split"){ cashAmount=parseMoney((document.getElementById("splitCashAmount")||{}).value); gcashAmount=parseMoney((document.getElementById("splitGcashAmount")||{}).value); } return {cashAmount:cashAmount,gcashAmount:gcashAmount}; }
   function validateSplitPayment(total){ var payment=((document.getElementById("payment")||{}).value||"").trim(); if(payment!=="Split") return true; var cashAmount=parseMoney((document.getElementById("splitCashAmount")||{}).value); var gcashAmount=parseMoney((document.getElementById("splitGcashAmount")||{}).value); if(cashAmount<=0&&gcashAmount<=0){ alert("Please enter Cash and/or GCash amount for split payment."); return false; } var combined=cashAmount+gcashAmount; if(Math.abs(combined-total)>0.009){ alert("Split payment mismatch. Cash + GCash must equal Total."); return false; } return true; }
