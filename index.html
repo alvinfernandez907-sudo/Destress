@@ -1484,16 +1484,19 @@
     setAppReady(true);
   }
 
-  async function loadUserProfile(uid){
+ async function loadUserProfile(uid){
     if(!uid) throw new Error("UID is missing");
     var userDoc=await window.db.collection("users").doc(uid).get();
     if(!userDoc.exists) throw new Error("Profile not found");
     var data=userDoc.data()||{};
     if(!data.active) throw new Error("This account is inactive.");
-    CURRENT_USER_PROFILE=data; CURRENT_BRANCH=data.branch||""; LEGACY_BRANCH=data.branch||"";
+    CURRENT_USER_PROFILE=data; 
+    CURRENT_BRANCH=data.branch||""; 
+    LEGACY_BRANCH=data.legacyBranch||data.branch||"";  // ← changed this line
     if(!CURRENT_BRANCH) throw new Error("Branch is missing in user profile.");
-    var branchNameEl=document.getElementById("homeBranchName"); if(branchNameEl) branchNameEl.textContent=CURRENT_BRANCH;
-  }
+    var branchNameEl=document.getElementById("homeBranchName"); 
+    if(branchNameEl) branchNameEl.textContent=CURRENT_BRANCH;
+}
 
   async function loginUser(){
     var loginName=(document.getElementById("loginName").value||"").trim();
